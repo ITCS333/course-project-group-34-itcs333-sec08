@@ -5,5 +5,12 @@
 ## The names and student IDs of all team members.
 
 ## A table indicating which student was responsible for which task.
+| **Student ID** | **Name**                            | **Assigned Task**                                |
+| -------------- | ----------------------------------- | ------------------------------------------------ |
+| 202302274      | HUSSAIN ALI KADHEM KADHEM           | Task 1: Homepage, Admin Portal & User Management |
+| 202305787      | OSAMA ESSA SALEH ALHAREES           | Task 2: Course Resources                         |
+| 202302718      | MOHAMED NADER MOHAMED KARIM GHULAMI | Task 3: Weekly Breakdown                         |
+| 202306011      | AHMED KADHEM ABDULLA ALASMAWI       | Task 4: Assignments                              |
+| 202303668      | KHALED WALEED QASIM MUTHANNA        | Task 5: General Discussion Boards                |
 
 ## A link to your live, hosted application on Replit.
