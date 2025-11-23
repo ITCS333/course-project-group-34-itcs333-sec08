@@ -13,6 +13,7 @@
 
 // --- Element Selections ---
 // TODO: Select the section for the week list ('#week-list-section').
+const listSection = document.querySelector('#week-list-section');
 
 // --- Functions ---
 
@@ -25,6 +26,27 @@
  */
 function createWeekArticle(week) {
   // ... your implementation here ...
+  const article = document.createElement('article');
+  
+  const heading = document.createElement('h2');
+  heading.textContent = week.title;
+  
+  const startDatePara = document.createElement('p');
+  startDatePara.textContent = `Starts on: ${week.startDate}`;
+  
+  const descriptionPara = document.createElement('p');
+  descriptionPara.textContent = week.description;
+  
+  const link = document.createElement('a');
+  link.href = `details.html?id=${week.id}`;
+  link.textContent = 'View Details & Discussion';
+  
+  article.appendChild(heading);
+  article.appendChild(startDatePara);
+  article.appendChild(descriptionPara);
+  article.appendChild(link);
+  
+  return article;
 }
 
 /**
@@ -40,6 +62,19 @@ function createWeekArticle(week) {
  */
 async function loadWeeks() {
   // ... your implementation here ...
+  try {
+    const response = await fetch('weeks.json');
+    const weeksArray = await response.json();
+    
+    listSection.innerHTML = '';
+    
+    weeksArray.forEach(week => {
+      const article = createWeekArticle(week);
+      listSection.appendChild(article);
+    });
+  } catch (error) {
+    console.error('Error loading weeks:', error);
+  }
 }
 
 // --- Initial Page Load ---
