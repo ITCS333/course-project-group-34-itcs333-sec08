@@ -16,11 +16,12 @@
 
     <!-- TODO: Link to your CSS framework or stylesheet. -->
      <link rel="stylesheet" href="../common/styles.css">
+    <script src="details.js" defer></script>
 </head>
 <body>
     <!-- TODO: Create a 'header' with a main heading ('h1'). You can use a dummy title like "Chapter 1 Notes". -->
      <header>
-        <h1>Chapter 1 Notes</h1>
+        <h1 id="resource-title">Chapter 1 Notes</h1>
      </header>
 
     <!-- TODO: Create the 'main' content area. -->
@@ -31,11 +32,11 @@
             <!-- TODO: Use an 'article' to display the main resource information. -->
             <article>
                 <!-- TODO: Add a paragraph ('p') for the resource description (use dummy text). -->
-                 <p>In this chapter we will talk about ... and I hope you will enjoy and understand the chapter.</p>
+                 <p id="resource-description">In this chapter we will talk about ... and I hope you will enjoy and understand the chapter.</p>
                 <!-- TODO: Add an anchor tag ('a') that links to the actual resource URL (use a dummy link like "https://example.com").
                     - Text should be "Access Resource Material".
                     - Consider adding 'target="_blank"' to open it in a new tab. -->
-                    <a href="https://example.com" target="_blank">Access Resource Material</a>
+                    <a id="resource-link" href="https://example.com" target="_blank">Access Resource Material</a>
             <!-- End of article. -->
             </article>
         </section>
@@ -48,7 +49,7 @@
 
             <!-- Subsection 2.1: Existing Comments -->
             <!-- TODO: Add a container (like a 'div') for the list of comments. -->
-             <div>
+             <div id="comment-list">
                 <!-- TODO: Add 1-2 dummy comments to show the structure. -->
 
                 <!-- Example Comment 1: -->
@@ -72,7 +73,7 @@
 
             <!-- Subsection 2.2: Add a Comment Form -->
             <!-- TODO: Create a 'form' for users to post new comments. Action can be '#'. -->
-             <form action="#">
+             <form action="#" id="comment-form">
                 <!-- TODO: Use a 'fieldset' to group the controls. -->
                  <fieldset>
                     <!-- TODO: Add a 'legend', e.g., "Leave a Comment". -->
