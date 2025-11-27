@@ -72,11 +72,10 @@ function createResourceRow(resource) {
  * append the resulting <tr> to `resourcesTableBody`.
  */
 function renderTable() {
-  const tableBody = document.getElementById('resources-tbody');
-  tableBody.innerHTML="";
+  resourcesTbody.innerHTML="";
 
   resources.forEach(function(resource){
-    tableBody.appendChild(createResourceRow(resource));
+    resourcesTbody.appendChild(createResourceRow(resource));
   });
 }
 
@@ -133,7 +132,7 @@ function handleTableClick(event) {
     resources = resources.filter(row => row.id !== idToDelete);
     renderTable();
   }
-  
+
 }
 
 /**
@@ -147,7 +146,13 @@ function handleTableClick(event) {
  * 5. Add the 'click' event listener to `resourcesTableBody` (calls `handleTableClick`).
  */
 async function loadAndInitialize() {
-  // ... your implementation here ...
+  const response = await fetch('resources.json');
+  const data = await response.json();
+  resources=data;
+  renderTable();
+  resourceForm.addEventListener("submit", handleAddResource);
+  resourcesTbody.addEventListener("click", handleTableClick);
+
 }
 
 // --- Initial Page Load ---
