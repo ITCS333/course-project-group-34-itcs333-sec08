@@ -1,338 +1,280 @@
 <?php
+session_start();
+
 /**
  * Student Management API
  * 
- * This is a RESTful API that handles all CRUD operations for student management.
- * It uses PDO to interact with a MySQL database.
+ * A full RESTful API for:
+ * - Retrieving students
+ * - Adding students
+ * - Updating students
+ * - Deleting students
+ * - Changing passwords
  * 
- * Database Table Structure (for reference):
- * Table: students
- * Columns:
- *   - id (INT, PRIMARY KEY, AUTO_INCREMENT)
- *   - student_id (VARCHAR(50), UNIQUE) - The student's university ID
- *   - name (VARCHAR(100))
- *   - email (VARCHAR(100), UNIQUE)
- *   - password (VARCHAR(255)) - Hashed password
- *   - created_at (TIMESTAMP)
- * 
- * HTTP Methods Supported:
- *   - GET: Retrieve student(s)
- *   - POST: Create a new student OR change password
- *   - PUT: Update an existing student
- *   - DELETE: Delete a student
- * 
- * Response Format: JSON
+ * Uses PDO + MySQL (database = main)
  */
 
-// TODO: Set headers for JSON response and CORS
-// Set Content-Type to application/json
-// Allow cross-origin requests (CORS) if needed
-// Allow specific HTTP methods (GET, POST, PUT, DELETE, OPTIONS)
-// Allow specific headers (Content-Type, Authorization)
+header("Content-Type: application/json");
+header("Access-Control-Allow-Origin: http://localhost");
+header("Access-Control-Allow-Credentials: true");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
+// Handle preflight OPTIONS request
+if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") {
+    http_response_code(200);
+    exit;
+}
 
 
-// TODO: Handle preflight OPTIONS request
-// If the request method is OPTIONS, return 200 status and exit
+require_once __DIR__ . "/../../auth/api/connect.php";
+$pdo = getDBConnection();
+
+// Get method & input data
+$method = $_SERVER["REQUEST_METHOD"];
+$inputJSON = file_get_contents("php://input");
+$inputData = json_decode($inputJSON, true) ?? [];
 
 
-// TODO: Include the database connection class
-// Assume the Database class has a method getConnection() that returns a PDO instance
+// ============================
+// Helper Functions
+// ============================
+
+function sendResponse($data, $status = 200) {
+    http_response_code($status);
+    echo json_encode($data);
+    exit;
+}
+
+function validateEmail($email) {
+    return filter_var($email, FILTER_VALIDATE_EMAIL);
+}
+
+function sanitizeInput($str) {
+    return htmlspecialchars(strip_tags(trim($str)));
+}
 
 
-// TODO: Get the PDO database connection
+// ============================
+// GET: ALL STUDENTS
+// ============================
 
-
-// TODO: Get the HTTP request method
-// Use $_SERVER['REQUEST_METHOD']
-
-
-// TODO: Get the request body for POST and PUT requests
-// Use file_get_contents('php://input') to get raw POST data
-// Decode JSON data using json_decode()
-
-
-// TODO: Parse query parameters for filtering and searching
-
-
-/**
- * Function: Get all students or search for specific students
- * Method: GET
- * 
- * Query Parameters:
- *   - search: Optional search term to filter by name, student_id, or email
- *   - sort: Optional field to sort by (name, student_id, email)
- *   - order: Optional sort order (asc or desc)
- */
 function getStudents($db) {
-    // TODO: Check if search parameter exists
-    // If yes, prepare SQL query with WHERE clause using LIKE
-    // Search should work on name, student_id, and email fields
+
+    $hasSearch = isset($_GET["search"]) && $_GET["search"] !== "";
+    $searchTerm = "%" . ($_GET["search"] ?? "") . "%";
+
+    $sql = "SELECT student_id, name, email, created_at FROM students";
     
-    // TODO: Check if sort and order parameters exist
-    // If yes, add ORDER BY clause to the query
-    // Validate sort field to prevent SQL injection (only allow: name, student_id, email)
-    // Validate order to prevent SQL injection (only allow: asc, desc)
-    
-    // TODO: Prepare the SQL query using PDO
-    // Note: Do NOT select the password field
-    
-    // TODO: Bind parameters if using search
-    
-    // TODO: Execute the query
-    
-    // TODO: Fetch all results as an associative array
-    
-    // TODO: Return JSON response with success status and data
+    if ($hasSearch) {
+        $sql .= " WHERE name LIKE ? OR student_id LIKE ? OR email LIKE ?";
+    }
+
+    $stmt = $db->prepare($sql);
+
+    if ($hasSearch) {
+        $stmt->execute([$searchTerm, $searchTerm, $searchTerm]);
+    } else {
+        $stmt->execute();
+    }
+
+    $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    sendResponse(["success" => true, "data" => $students]);
 }
 
 
-/**
- * Function: Get a single student by student_id
- * Method: GET
- * 
- * Query Parameters:
- *   - student_id: The student's university ID
- */
-function getStudentById($db, $studentId) {
-    // TODO: Prepare SQL query to select student by student_id
-    
-    // TODO: Bind the student_id parameter
-    
-    // TODO: Execute the query
-    
-    // TODO: Fetch the result
-    
-    // TODO: Check if student exists
-    // If yes, return success response with student data
-    // If no, return error response with 404 status
-}
+// ============================
+// POST: CREATE STUDENT
+// ============================
 
-
-/**
- * Function: Create a new student
- * Method: POST
- * 
- * Required JSON Body:
- *   - student_id: The student's university ID (must be unique)
- *   - name: Student's full name
- *   - email: Student's email (must be unique)
- *   - password: Default password (will be hashed)
- */
 function createStudent($db, $data) {
-    // TODO: Validate required fields
-    // Check if student_id, name, email, and password are provided
-    // If any field is missing, return error response with 400 status
-    
-    // TODO: Sanitize input data
-    // Trim whitespace from all fields
-    // Validate email format using filter_var()
-    
-    // TODO: Check if student_id or email already exists
-    // Prepare and execute a SELECT query to check for duplicates
-    // If duplicate found, return error response with 409 status (Conflict)
-    
-    // TODO: Hash the password
-    // Use password_hash() with PASSWORD_DEFAULT
-    
-    // TODO: Prepare INSERT query
-    
-    // TODO: Bind parameters
-    // Bind student_id, name, email, and hashed password
-    
-    // TODO: Execute the query
-    
-    // TODO: Check if insert was successful
-    // If yes, return success response with 201 status (Created)
-    // If no, return error response with 500 status
+
+    if (!isset($data["student_id"], $data["name"], $data["email"], $data["password"])) {
+        sendResponse(["success" => false, "message" => "Missing fields"], 400);
+    }
+
+    $student_id = sanitizeInput($data["student_id"]);
+    $name       = sanitizeInput($data["name"]);
+    $email      = sanitizeInput($data["email"]);
+    $password   = $data["password"];
+
+    if (!validateEmail($email)) {
+        sendResponse(["success" => false, "message" => "Invalid email"], 400);
+    }
+
+    // Check duplicates
+    $check = $db->prepare("SELECT student_id FROM students WHERE student_id = ? OR email = ?");
+    $check->execute([$student_id, $email]);
+    if ($check->fetch()) {
+        sendResponse(["success" => false, "message" => "Student already exists"], 409);
+    }
+
+    // Hash password
+    $hashed = password_hash($password, PASSWORD_DEFAULT);
+
+    // Insert
+    $stmt = $db->prepare("INSERT INTO students (student_id, name, email, password) VALUES (?, ?, ?, ?)");
+    $stmt->execute([$student_id, $name, $email, $hashed]);
+
+    sendResponse(["success" => true, "message" => "Student created"], 201);
 }
 
 
-/**
- * Function: Update an existing student
- * Method: PUT
- * 
- * Required JSON Body:
- *   - student_id: The student's university ID (to identify which student to update)
- *   - name: Updated student name (optional)
- *   - email: Updated student email (optional)
- */
+// ============================
+// PUT: UPDATE STUDENT
+// ============================
+
 function updateStudent($db, $data) {
-    // TODO: Validate that student_id is provided
-    // If not, return error response with 400 status
-    
-    // TODO: Check if student exists
-    // Prepare and execute a SELECT query to find the student
-    // If not found, return error response with 404 status
-    
-    // TODO: Build UPDATE query dynamically based on provided fields
-    // Only update fields that are provided in the request
-    
-    // TODO: If email is being updated, check if new email already exists
-    // Prepare and execute a SELECT query
-    // Exclude the current student from the check
-    // If duplicate found, return error response with 409 status
-    
-    // TODO: Bind parameters dynamically
-    // Bind only the parameters that are being updated
-    
-    // TODO: Execute the query
-    
-    // TODO: Check if update was successful
-    // If yes, return success response
-    // If no, return error response with 500 status
+
+    if (!isset($data["student_id"])) {
+        sendResponse(["success" => false, "message" => "student_id required"], 400);
+    }
+
+    $id       = sanitizeInput($data["student_id"]);
+    $newName  = isset($data["name"])  ? sanitizeInput($data["name"])  : null;
+    $newEmail = isset($data["email"]) ? sanitizeInput($data["email"]) : null;
+
+    // Check if exists
+    $stmt = $db->prepare("SELECT * FROM students WHERE student_id = ?");
+    $stmt->execute([$id]);
+    if (!$stmt->fetch()) {
+        sendResponse(["success" => false, "message" => "Student not found"], 404);
+    }
+
+    // Check duplicate email
+    if ($newEmail) {
+        $dup = $db->prepare("SELECT student_id FROM students WHERE email = ? AND student_id != ?");
+        $dup->execute([$newEmail, $id]);
+        if ($dup->fetch()) {
+            sendResponse(["success" => false, "message" => "Email already in use"], 409);
+        }
+    }
+
+    // Build update query dynamically
+    $sql = "UPDATE students SET ";
+    $params = [];
+
+    if ($newName)  { $sql .= "name = ?, ";  $params[] = $newName; }
+    if ($newEmail) { $sql .= "email = ?, "; $params[] = $newEmail; }
+
+    $sql = rtrim($sql, ", ") . " WHERE student_id = ?";
+    $params[] = $id;
+
+    $update = $db->prepare($sql);
+    $update->execute($params);
+
+    sendResponse(["success" => true, "message" => "Student updated"]);
 }
 
 
-/**
- * Function: Delete a student
- * Method: DELETE
- * 
- * Query Parameters or JSON Body:
- *   - student_id: The student's university ID
- */
-function deleteStudent($db, $studentId) {
-    // TODO: Validate that student_id is provided
-    // If not, return error response with 400 status
-    
-    // TODO: Check if student exists
-    // Prepare and execute a SELECT query
-    // If not found, return error response with 404 status
-    
-    // TODO: Prepare DELETE query
-    
-    // TODO: Bind the student_id parameter
-    
-    // TODO: Execute the query
-    
-    // TODO: Check if delete was successful
-    // If yes, return success response
-    // If no, return error response with 500 status
+// ============================
+// DELETE STUDENT
+// ============================
+
+function deleteStudent($db, $id) {
+
+    $stmt = $db->prepare("SELECT * FROM students WHERE student_id = ?");
+    $stmt->execute([$id]);
+
+    if (!$stmt->fetch()) {
+        sendResponse(["success" => false, "message" => "Student not found"], 404);
+    }
+
+    $delete = $db->prepare("DELETE FROM students WHERE student_id = ?");
+    $delete->execute([$id]);
+
+    sendResponse(["success" => true, "message" => "Student deleted"]);
 }
 
 
-/**
- * Function: Change password
- * Method: POST with action=change_password
- * 
- * Required JSON Body:
- *   - student_id: The student's university ID (identifies whose password to change)
- *   - current_password: The student's current password
- *   - new_password: The new password to set
- */
+// ============================
+// CHANGE ADMIN PASSWORD
+// ============================
+
 function changePassword($db, $data) {
-    // TODO: Validate required fields
-    // Check if student_id, current_password, and new_password are provided
-    // If any field is missing, return error response with 400 status
-    
-    // TODO: Validate new password strength
-    // Check minimum length (at least 8 characters)
-    // If validation fails, return error response with 400 status
-    
-    // TODO: Retrieve current password hash from database
-    // Prepare and execute SELECT query to get password
-    
-    // TODO: Verify current password
-    // Use password_verify() to check if current_password matches the hash
-    // If verification fails, return error response with 401 status (Unauthorized)
-    
-    // TODO: Hash the new password
-    // Use password_hash() with PASSWORD_DEFAULT
-    
-    // TODO: Update password in database
-    // Prepare UPDATE query
-    
-    // TODO: Bind parameters and execute
-    
-    // TODO: Check if update was successful
-    // If yes, return success response
-    // If no, return error response with 500 status
+
+    if (!isset($data["current_password"], $data["new_password"])) {
+        sendResponse(["success" => false, "message" => "Missing fields"], 400);
+    }
+
+    $current = $data["current_password"];
+    $new     = $data["new_password"];
+
+    if (strlen($new) < 8) {
+        sendResponse(["success" => false, "message" => "New password must be at least 8 characters"], 400);
+    }
+
+    if (!isset($_SESSION["user_id"]) || $_SESSION["role"] !== "admin") {
+        sendResponse(["success" => false, "message" => "Unauthorized"], 401);
+    }
+
+    $adminId = $_SESSION["user_id"];
+
+    // Fetch old password
+    $stmt = $db->prepare("SELECT password FROM admins WHERE id = ?");
+    $stmt->execute([$adminId]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$user) {
+        sendResponse(["success" => false, "message" => "User not found"], 404);
+    }
+
+    if (!password_verify($current, $user["password"])) {
+        sendResponse(["success" => false, "message" => "Incorrect current password"], 401);
+    }
+
+    // Update password
+    $hashed = password_hash($new, PASSWORD_DEFAULT);
+
+    $up = $db->prepare("UPDATE admins SET password = ? WHERE id = ?");
+    $up->execute([$hashed, $adminId]);
+
+    sendResponse(["success" => true, "message" => "Password updated"]);
 }
 
 
-// ============================================================================
-// MAIN REQUEST ROUTER
-// ============================================================================
+
+// ============================
+// MAIN ROUTER
+// ============================
 
 try {
-    // TODO: Route the request based on HTTP method
-    
-    if ($method === 'GET') {
-        // TODO: Check if student_id is provided in query parameters
-        // If yes, call getStudentById()
-        // If no, call getStudents() to get all students (with optional search/sort)
-        
-    } elseif ($method === 'POST') {
-        // TODO: Check if this is a change password request
-        // Look for action=change_password in query parameters
-        // If yes, call changePassword()
-        // If no, call createStudent()
-        
-    } elseif ($method === 'PUT') {
-        // TODO: Call updateStudent()
-        
-    } elseif ($method === 'DELETE') {
-        // TODO: Get student_id from query parameter or request body
-        // Call deleteStudent()
-        
-    } else {
-        // TODO: Return error for unsupported methods
-        // Set HTTP status to 405 (Method Not Allowed)
-        // Return JSON error message
+
+    // All routes in this API require an admin session
+    if (!isset($_SESSION["logged_in"]) || $_SESSION["role"] !== "admin") {
+        sendResponse(["success" => false, "message" => "Unauthorized"], 401);
     }
-    
-} catch (PDOException $e) {
-    // TODO: Handle database errors
-    // Log the error message (optional)
-    // Return generic error response with 500 status
-    
+
+    if ($method === "GET") {
+
+        getStudents($pdo);
+    }
+
+    elseif ($method === "POST") {
+
+        if (isset($_GET["action"]) && $_GET["action"] === "change_password") {
+            changePassword($pdo, $inputData);
+        } else {
+            createStudent($pdo, $inputData);
+        }
+    }
+
+    elseif ($method === "PUT") {
+        updateStudent($pdo, $inputData);
+    }
+
+    elseif ($method === "DELETE") {
+        $id = $_GET["student_id"] ?? $inputData["student_id"] ?? null;
+        deleteStudent($pdo, $id);
+    }
+
+    else {
+        sendResponse(["success" => false, "message" => "Method not allowed"], 405);
+    }
+
 } catch (Exception $e) {
-    // TODO: Handle general errors
-    // Return error response with 500 status
-}
-
-
-// ============================================================================
-// HELPER FUNCTIONS (Optional but Recommended)
-// ============================================================================
-
-/**
- * Helper function to send JSON response
- * 
- * @param mixed $data - Data to send
- * @param int $statusCode - HTTP status code
- */
-function sendResponse($data, $statusCode = 200) {
-    // TODO: Set HTTP response code
-    
-    // TODO: Echo JSON encoded data
-    
-    // TODO: Exit to prevent further execution
-}
-
-
-/**
- * Helper function to validate email format
- * 
- * @param string $email - Email address to validate
- * @return bool - True if valid, false otherwise
- */
-function validateEmail($email) {
-    // TODO: Use filter_var with FILTER_VALIDATE_EMAIL
-    // Return true if valid, false otherwise
-}
-
-
-/**
- * Helper function to sanitize input
- * 
- * @param string $data - Data to sanitize
- * @return string - Sanitized data
- */
-function sanitizeInput($data) {
-    // TODO: Trim whitespace
-    // TODO: Strip HTML tags using strip_tags()
-    // TODO: Convert special characters using htmlspecialchars()
-    // Return sanitized data
+    sendResponse(["success" => false, "message" => $e->getMessage()], 500);
 }
 
 ?>

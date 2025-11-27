@@ -1,0 +1,109 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.6;
+    color: #1a1a1a;
+    background-color: #fafafa;
+    min-height: 100vh;
+}
+
+/* Header Styles */
+header {
+    background: #ffffff;
+    padding: 60px 20px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid #e5e7eb;
+}
+
+header h1 {
+    color: #111827;
+    font-size: 2.25rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Main Content Styles */
+main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 20px;
+}
+
+/* Navigation Styles */
+nav {
+    background: #ffffff;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+nav h2 {
+    color: #6b7280;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* List Styles */
+ul {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1px;
+    background-color: #e5e7eb;
+    border: 1px solid #e5e7eb;
+}
+
+li {
+    margin-bottom: 0;
+    background-color: #ffffff;
+}
+
+/* Link Styles */
+a {
+    display: flex;
+    align-items: center;
+    padding: 20px 24px;
+    background-color: #ffffff;
+    color: #111827;
+    text-decoration: none;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    transition: background-color 0.15s ease;
+    border: none;
+    position: relative;
+    min-height: 64px;
+}
+
+a::before {
+    content: '→';
+    position: absolute;
+    right: 24px;
+    color: #9ca3af;
+    font-size: 1.25rem;
+    transition: transform 0.15s ease, color 0.15s ease;
+}
+
+a:hover {
+    background-color: #eff6ff;
+    border-left: 4px solid #2563eb;
+    padding-left: 20px;
+}
+
+a:hover::before {
+    transform: translateX(4px);
+    color: #2563eb;
+}
+
+a:active {
+    background-color: #f3f4f6;
+}
