@@ -17,8 +17,10 @@ let resources = [];
 
 // --- Element Selections ---
 // TODO: Select the resource form ('#resource-form').
+const resourceForm = document.getElementById('resource-form');
 
 // TODO: Select the resources table body ('#resources-tbody').
+const resourcesTbody = document.getElementById('resources-tbody');
 
 // --- Functions ---
 
@@ -33,7 +35,32 @@ let resources = [];
  * - A "Delete" button with class "delete-btn" and `data-id="${id}"`.
  */
 function createResourceRow(resource) {
-  // ... your implementation here ...
+  const row=document.createElement('tr')
+  const dataTitle = document.createElement('td');
+  const dataDescription = document.createElement('td');
+  const buttomColumn= document.createElement('td');
+  const editButton = document.createElement('button');
+  const deleteButton = document.createElement('button');
+
+  dataTitle.textContent=resource.title;
+  dataDescription.textContent=resource.description;
+  editButton.textContent="Edit";
+  deleteButton.textContent ="Delete";
+  
+  editButton.dataset.id = resource.id;
+  deleteButton.dataset.id = resource.id;
+
+  editButton.classList.add("edit-btn");
+  deleteButton.classList.add("delete-btn");
+
+
+  row.appendChild(dataTitle);
+  row.appendChild(dataDescription);
+  buttomColumn.appendChild(editButton);
+  buttomColumn.appendChild(deleteButton);
+  row.appendChild(buttomColumn);
+
+  return row;
 }
 
 /**
