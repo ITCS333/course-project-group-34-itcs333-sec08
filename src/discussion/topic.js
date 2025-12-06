@@ -34,6 +34,7 @@ let currentReplies = []; // Will hold replies for *this* topic
  */
 function getTopicIdFromURL() {
   // ... your implementation here ...
+
 }
 
 /**
@@ -47,6 +48,10 @@ function getTopicIdFromURL() {
  */
 function renderOriginalPost(topic) {
   // ... your implementation here ...
+  topicSubject.textContent = topic.subject;
+  opMessage.textContent = topic.message;
+  opFooter.textContent = `Posted by: ${topic.author} on ${topic.date}`;
+
 }
 
 /**
@@ -59,6 +64,7 @@ function renderOriginalPost(topic) {
  */
 function createReplyArticle(reply) {
   // ... your implementation here ...
+
 }
 
 /**
@@ -71,6 +77,7 @@ function createReplyArticle(reply) {
  */
 function renderReplies() {
   // ... your implementation here ...
+
 }
 
 /**
@@ -107,6 +114,7 @@ function handleAddReply(event) {
  */
 function handleReplyListClick(event) {
   // ... your implementation here ...
+  
 }
 
 /**
