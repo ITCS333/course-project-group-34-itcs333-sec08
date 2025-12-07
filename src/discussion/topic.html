@@ -18,6 +18,7 @@
       <!--do it-->
     <script src="topic.js" defer></script>
 
+
 </head>
 <body>
     <!-- TODO: Create a 'header' with a main heading ('h1'). Use a dummy title like "Question about CSS Flexbox". -->
@@ -33,8 +34,8 @@
         <!-- End of article. -->
          <section> 
              <article id="original-post">
-                <p>I'm having trouble understanding how to use CSS Flexbox for layout. Can someone explain how 'justify-content' works?</p>
-                <footer>Posted by: Student Name on YYYY-MM-DD</footer>
+                <p id="op-message">I'm having trouble understanding how to use CSS Flexbox for layout. Can someone explain how 'justify-content' works?</p>
+                <footer id="op-footer">Posted by: Student Name on YYYY-MM-DD</footer>
                 <div class="post-action">
                     <button id="edit-post">Edit</button>
                     <button id="delete-post">Delete</button>
@@ -58,7 +59,7 @@
                 <!-- End of reply article. -->
             <section id="replies-section">
                 <h2>Replies</h2>
-                <div class="replies-list">
+                <div class="replies-list" id="reply-list-container">
                     <article class="reply">
                         <p>Have you tried using 'justify-content: space-between'?</p>
                         <footer>Posted by: Another Student on YYYY-MM-DD</footer>
@@ -97,7 +98,7 @@
         <!-- End of replies section. -->
           <section>
              <h2>Post a Reply</h2>
-                <form action="#">
+                <form action="#" id="reply-form" >
                     <fieldset>
                         <legend>Your Reply</legend>
                         <label for="new-reply">Reply:</label>
