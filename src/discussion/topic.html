@@ -8,16 +8,23 @@
 <html lang="en">
 <head>
     <!-- TODO: Add meta tags for charset and viewport. -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- TODO: Add a title, for now use "Topic Details". -->
+    <title>Topic Details</title>
 
     <!-- TODO: Link to your CSS framework or stylesheet. -->
+      <!--do it-->
+    <script src="topic.js" defer></script>
+
+
 </head>
 <body>
     <!-- TODO: Create a 'header' with a main heading ('h1'). Use a dummy title like "Question about CSS Flexbox". -->
-
+    <header><h1 id="topic-subject">Question about CSS Flexbox</h1></header>
     <!-- TODO: Create the 'main' content area. -->
-
+    <main>
         <!-- Section 1: Original Post -->
         <!-- TODO: Use an 'article' to display the main topic post. Give it an 'id' like "original-post". -->
             <!-- TODO: Add a paragraph ('p') with the dummy text of the original message. -->
@@ -25,6 +32,16 @@
             <!-- TODO: Add a container for "Edit" and "Delete" buttons, just like on the main page.
                  Remember, these actions are restricted to the owner or admin. -->
         <!-- End of article. -->
+         <section> 
+             <article id="original-post">
+                <p id="op-message">I'm having trouble understanding how to use CSS Flexbox for layout. Can someone explain how 'justify-content' works?</p>
+                <footer id="op-footer">Posted by: Student Name on YYYY-MM-DD</footer>
+                <div class="post-action">
+                    <button id="edit-post">Edit</button>
+                    <button id="delete-post">Delete</button>
+                </div>
+            </article>
+         </section>
 
         <!-- Section 2: Replies -->
         <!-- TODO: Create a 'section' for the replies, with an 'id' of "replies-section". -->
@@ -40,6 +57,28 @@
                     <!-- TODO: Add a container for "Edit" and "Delete" buttons for this specific reply.
                          These actions are restricted to the reply's author or the admin. -->
                 <!-- End of reply article. -->
+            <section id="replies-section">
+                <h2>Replies</h2>
+                <div class="replies-list" id="reply-list-container">
+                    <article class="reply">
+                        <p>Have you tried using 'justify-content: space-between'?</p>
+                        <footer>Posted by: Another Student on YYYY-MM-DD</footer>
+                        <div class="reply-action">
+                            <button class="edit-reply">Edit</button>
+                            <button class="delete-reply">Delete</button>
+                        </div>
+                    </article>
+
+                    <article class="reply">
+                        <p>'justify-content' aligns items along the main axis. You can use values like 'center', 'flex-start', 'flex-end', etc.</p>
+                        <footer>Posted by: Third Student on YYYY-MM-DD</footer>
+                        <div class="reply-action">
+                            <button class="edit-reply">Edit</button>
+                            <button class="delete-reply">Delete</button>
+                        </div>
+                    </article>
+                </div>
+            </section>
 
         <!-- Section 3: Add a Reply Form -->
         <!-- TODO: Create a 'section' for the reply form. -->
@@ -57,7 +96,19 @@
                 <!-- End of fieldset. -->
             <!-- End of form. -->
         <!-- End of replies section. -->
+          <section>
+             <h2>Post a Reply</h2>
+                <form action="#" id="reply-form" >
+                    <fieldset>
+                        <legend>Your Reply</legend>
+                        <label for="new-reply">Reply:</label>
+                        <textarea id="new-reply" required></textarea>
+                        <button type="submit">Post Reply</button>
+                    </fieldset>
+                </form>
+          </section>
 
     <!-- End of main. -->
+    </main>
 </body>
 </html>
