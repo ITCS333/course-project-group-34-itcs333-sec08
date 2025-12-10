@@ -9,151 +9,146 @@
 <html lang="en">
 <head>
     <!-- TODO: Add the 'meta' tag for character encoding (UTF-8). -->
-     <meta charset="UTF-8">
+    <meta charset="UTF-8">
     <!-- TODO: Add the responsive 'viewport' meta tag. -->
-     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- TODO: Add a title, e.g., "Web Dev Course Homepage". -->
-     <title>Web Dev Course Homepage</title>
+    <title>Web Dev Course Homepage</title>
     <!-- TODO: Link to your CSS framework or stylesheet. -->
-     <link rel="stylesheet" href="src/common/homePage.css">
+    <link rel="stylesheet" href="src/common/homePage.css">
 </head>
 <body>
 
     <!-- TODO: Create a 'header' with a main heading ('h1') like "Welcome to the Web Development Course". -->
-     <header>
-          <h1>Welcome to the Web Development Course</h1>
-     </header>
+    <header>
+        <h1>Welcome to the Web Development Course</h1>
+    </header>
     <!-- TODO: Create the 'main' content area. -->
-     <main>
+    <main>
         <!-- TODO: Create a 'nav' element to hold the site navigation. -->
-         <nav>
+        <nav>
             <!-- TODO: Add a sub-heading ('h2') "Site Navigation". -->
-          <h2>Site Navigation</h2>
+            <h2>Site Navigation</h2>
             <!-- TODO: Create an unordered list ('ul') to hold the links. -->
-               <ul>
+            <ul>
                 <!-- Section: General -->
                 <!-- TODO: Add a list item ('li') with a link ('a') to the Login page.
                      - Text: "Login" -->
-                     <li><a href="src/auth/login.html" data-roles="any">Login</a></li>
+                <li><a href="src/auth/login.html" data-roles="any">Login</a></li>
 
                 <!-- Section: Admin Pages -->
                 <!-- TODO: Add a list item ('li') with a link ('a') to the Admin Portal.
                      - Text: "Admin Portal (Manage Students)" -->
-                    <li><a href="src/admin/manage_users.html" data-roles="admin">Admin Portal (Manage Students)</a></li>
+                <li><a href="src/admin/manage_users.html" data-roles="admin">Admin Portal (Manage Students)</a></li>
                 <!-- TODO: Add a list item ('li') with a link ('a') to the Admin Resources page.
                      - Text: "Admin: Manage Resources" -->
-                    <li><a href="src/resources/admin.html" data-roles="admin">Admin: Manage Resources</a></li>
+                <li><a href="src/resources/admin.html" data-roles="admin">Admin: Manage Resources</a></li>
                 <!-- TODO: Add a list item ('li') with a link ('a') to the Admin Weekly Breakdown page.
                      - Text: "Admin: Manage Weekly Breakdown" -->
-                    <li><a href="src/weekly/admin.html" data-roles="admin">Admin: Manage Weekly Breakdown</a></li>
+                <li><a href="src/weekly/admin.html" data-roles="admin">Admin: Manage Weekly Breakdown</a></li>
                 <!-- TODO: Add a list item ('li') with a link ('a') to the Admin Assignments page.
                      - Text: "Admin: Manage Assignments" -->
-                    <li><a href="src/assignments/admin.html" data-roles="admin">Admin: Manage Assignments</a></li>
+                <li><a href="src/assignments/admin.html" data-roles="admin">Admin: Manage Assignments</a></li>
                 <!-- Section: Student Pages -->
                 <!-- TODO: Add a list item ('li') with a link ('a') to the Student Resources page.
                      - Text: "View Course Resources" -->
-                    <li><a href="src/resources/list.html" data-roles="student">View Course Resources</a></li>
+                <li><a href="src/resources/list.html" data-roles="student">View Course Resources</a></li>
                 <!-- TODO: Add a list item ('li') with a link ('a') to the Student Weekly Breakdown page.
                      - Text: "View Weekly Breakdown" -->
-                     <li><a href="src/weekly/list.html" data-roles="student">View Weekly Breakdown</a></li>
+                <li><a href="src/weekly/list.html" data-roles="student">View Weekly Breakdown</a></li>
                 <!-- TODO: Add a list item ('li') with a link ('a') to the Student Assignments page.
                      - Text: "View Assignments" -->
-               <li><a href="src/assignments/list.html" data-roles="student">View Assignments</a></li>
+                <li><a href="src/assignments/list.html" data-roles="student">View Assignments</a></li>
                 <!-- TODO: Add a list item ('li') with a link ('a') to the Discussion Board.
                      - Text: "General Discussion Board" -->
-                    <li><a href="src/discussion/baord.html" data-roles="admin,student">General Discussion Board</a></li>
+                <li><a href="src/discussion/baord.html" data-roles="admin,student">General Discussion Board</a></li>
 
-                    <!-- Extra: Logout link for both admins and students -->
-                    <li><a href="#" id="logout-link" data-roles="admin,student">Logout</a></li>
+                <!-- Extra: Logout link for both admins and students -->
+                <li><a href="#" id="logout-link" data-roles="admin,student">Logout</a></li>
             <!-- End of the unordered list. -->
-             </ul>
+            </ul>
         <!-- End of the 'nav' element. -->
-         </nav>
+        </nav>
 
     <!-- End of 'main'. -->
-</main>
+    </main>
 
-<!-- Session + role handling + logout -->
-<script>
-document.addEventListener("DOMContentLoaded", async () => {
-    const nav = document.querySelector("nav");
-    let currentRole = null;
+    <!-- Session + role handling + logout -->
+    <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        const nav = document.querySelector("nav");
+        let currentRole = null;
 
-    // Message container for "this service requires ..." text
-    const roleMessage = document.createElement("p");
-    roleMessage.id = "role-message";
-    roleMessage.style.color = "red";
-    roleMessage.style.marginTop = "1rem";
+        const roleMessage = document.createElement("p");
+        roleMessage.id = "role-message";
+        roleMessage.style.color = "red";
+        roleMessage.style.marginTop = "1rem";
 
-    if (nav && nav.parentNode) {
-        nav.parentNode.insertBefore(roleMessage, nav.nextSibling);
-    }
+        if (nav && nav.parentNode) {
+            nav.parentNode.insertBefore(roleMessage, nav.nextSibling);
+        }
 
-    // 1) Check session; redirect to login if not logged in
-    try {
-        const response = await fetch("src/auth/api/session.php");
-        const session = await response.json();
+        try {
+            const res = await fetch("src/auth/api/session.php");
+            const session = await res.json();
 
-        if (!session.logged_in) {
+            if (!session.logged_in) {
+                window.location.href = "src/auth/login.html";
+                return;
+            }
+
+            currentRole = session.user.role;
+        } catch (err) {
             window.location.href = "src/auth/login.html";
             return;
         }
 
-        currentRole = session.user.role; // "admin" or "student"
-    } catch (err) {
-        // If we cannot verify, force login
-        window.location.href = "src/auth/login.html";
-        return;
-    }
-
-    // 2) Restrict links based on role
-    const links = document.querySelectorAll("nav a");
-    links.forEach(link => {
-        link.addEventListener("click", (event) => {
-            const rolesAttr = link.getAttribute("data-roles") || "any";
-            if (rolesAttr === "any") {
-                return;
-            }
-
-            const allowedRoles = rolesAttr.split(",").map(r => r.trim());
-            if (!allowedRoles.includes(currentRole)) {
-                event.preventDefault();
-
-                if (currentRole === "admin") {
-                    roleMessage.textContent = "This service requires a student account.";
-                } else if (currentRole === "student") {
-                    roleMessage.textContent = "This service requires an admin account.";
-                } else {
-                    roleMessage.textContent = "This service requires an admin/student account.";
+        const links = document.querySelectorAll("nav a");
+        links.forEach(link => {
+            link.addEventListener("click", (event) => {
+                const rolesAttr = link.getAttribute("data-roles") || "any";
+                if (rolesAttr === "any") {
+                    return;
                 }
-            }
+
+                const allowedRoles = rolesAttr.split(",").map(r => r.trim());
+                if (!allowedRoles.includes(currentRole)) {
+                    event.preventDefault();
+
+                    if (currentRole === "admin") {
+                        roleMessage.textContent = "This service requires a student account.";
+                    } else if (currentRole === "student") {
+                        roleMessage.textContent = "This service requires an admin account.";
+                    } else {
+                        roleMessage.textContent = "This service requires an admin/student account.";
+                    }
+                }
+            });
         });
-    });
 
-    // 3) Secure logout
-    const logoutLink = document.getElementById("logout-link");
-    if (logoutLink) {
-        logoutLink.addEventListener("click", async (event) => {
-            event.preventDefault();
-            try {
-                const res = await fetch("src/auth/api/logout.php", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" }
-                });
-                const result = await res.json();
+        const logoutLink = document.getElementById("logout-link");
+        if (logoutLink) {
+            logoutLink.addEventListener("click", async (event) => {
+                event.preventDefault();
+                try {
+                    const res = await fetch("src/auth/api/logout.php", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" }
+                    });
+                    const result = await res.json();
 
-                if (result.success) {
-                    window.location.href = "src/auth/login.html";
-                } else {
+                    if (result.success) {
+                        window.location.href = "src/auth/login.html";
+                    } else {
+                        alert("Logout failed. Please try again.");
+                    }
+                } catch (e) {
                     alert("Logout failed. Please try again.");
                 }
-            } catch (e) {
-                alert("Logout failed. Please try again.");
-            }
-        });
-    }
-});
-</script>
+            });
+        }
+    });
+    </script>
 
 </body>
 </html>
