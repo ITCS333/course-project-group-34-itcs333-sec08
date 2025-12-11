@@ -117,8 +117,10 @@
 
                     if (currentRole === "admin") {
                         roleMessage.textContent = "This service requires a student account.";
+                        alert("This service requires a student account.");
                     } else if (currentRole === "student") {
                         roleMessage.textContent = "This service requires an admin account.";
+                        alert("This service requires an admin account.");
                     } else {
                         roleMessage.textContent = "This service requires an admin/student account.";
                     }
