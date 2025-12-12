@@ -177,147 +177,175 @@ function getResourceById($db, $resourceId)
 }
 
 
-/**
- * Function: Create a new resource
- * Method: POST
- * 
- * Required JSON Body:
- *   - title: Resource title (required)
- *   - description: Resource description (optional)
- *   - link: URL to the resource (required)
- * 
- * Response:
- *   - success: true/false
- *   - message: Success or error message
- *   - id: ID of created resource (on success)
- */
+
 function createResource($db, $data)
 {
-    // TODO: Validate required fields
-    // Check if title and link are provided and not empty
-    // If any required field is missing, return error response with 400 status
+    if (!isset($data['title']) || !isset($data['link']) || empty(trim($data['title'])) || empty(trim($data['link']))) {
+        sendResponse([
+            "success" => false,
+            "message" => "Title and link are required"
+        ], 400);
+    }
 
-    // TODO: Sanitize input data
-    // Trim whitespace from all fields
-    // Validate URL format for link using filter_var with FILTER_VALIDATE_URL
-    // If URL is invalid, return error response with 400 status
+    $data["title"] = trim($data["title"]);
+    $data["link"] = trim($data["link"]);
+    if (isset($data["description"])) {
+        $data["description"] = trim($data["description"]);
+    } else {
+        $data["description"] = "";
+    }
+    if (!filter_var($data["link"], FILTER_VALIDATE_URL)) {
+        sendResponse([
+            "success" => false,
+            "message" => "Invalid link"
+        ], 400);
+    }
 
-    // TODO: Set default value for description if not provided
-    // Use empty string as default
+    $query = "INSERT INTO resources (title, description, link) VALUES (?, ?, ?)";
+    $stmt = $db->prepare($query);
 
-    // TODO: Prepare INSERT query
-    // INSERT INTO resources (title, description, link) VALUES (?, ?, ?)
+    $stmt->bindValue(1, $data["title"]);
+    $stmt->bindValue(2, $data["description"]);
+    $stmt->bindValue(3, $data["link"]);
 
-    // TODO: Bind parameters
-    // Bind title, description, and link
-
-    // TODO: Execute the query
-
-    // TODO: Check if insert was successful
-    // If yes, get the last inserted ID using $db->lastInsertId()
-    // Return success response with 201 status and the new resource ID
-    // If no, return error response with 500 status
+    if ($stmt->execute()) {
+        $newId = $db->lastInsertId();
+        sendResponse([
+            "success" => true,
+            "message" => "Resource created successfully",
+            "id" => $newId
+        ], 201);
+    } else {
+        sendResponse([
+            "success" => false,
+            "message" => "Failed to create resource"
+        ], 500);
+    }
 }
 
-
-/**
- * Function: Update an existing resource
- * Method: PUT
- * 
- * Required JSON Body:
- *   - id: The resource's database ID (required)
- *   - title: Updated resource title (optional)
- *   - description: Updated description (optional)
- *   - link: Updated URL (optional)
- * 
- * Response:
- *   - success: true/false
- *   - message: Success or error message
- */
 function updateResource($db, $data)
 {
-    // TODO: Validate that resource ID is provided
-    // If not, return error response with 400 status
+    if (!isset($data["id"]) || empty(trim($data["id"])) || !is_numeric(trim($data["id"]))) {
+        sendResponse([
+            "success" => false,
+            "message" => "Valid resource ID is required"
+        ], 400);
+    }
 
-    // TODO: Check if resource exists
-    // Prepare and execute a SELECT query to find the resource by id
-    // If not found, return error response with 404 status
+    $query = "SELECT id FROM resources WHERE id = ?";
+    $stmt = $db->prepare($query);
+    $stmt->bindValue(1, $data["id"], PDO::PARAM_INT);
+    $stmt->execute();
+    $resource = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$resource) {
+        sendResponse([
+            "success" => false,
+            "message" => "Resource not found"
+        ], 404);
+    }
 
-    // TODO: Build UPDATE query dynamically based on provided fields
-    // Initialize empty arrays for fields to update and values
-    // Check which fields are provided (title, description, link)
-    // Add each provided field to the update arrays
+    $fields = [];
+    $values = [];
+    if (isset($data["title"]) && !empty(trim($data["title"]))) {
+        $fields[] = "title = ?";
+        $values[] = trim($data["title"]);
+    }
+    if (isset($data["link"]) && !empty(trim($data["link"]))) {
+        if (!filter_var($data['link'], FILTER_VALIDATE_URL)) {
+            sendResponse([
+                'success' => false,
+                'message' => "Invalid link"
+            ], 400);
+        }
+        $fields[] = "link = ?";
+        $values[] = trim($data["link"]);
+    }
 
-    // TODO: If no fields to update, return error response with 400 status
+    if (isset($data["description"])) {
+        $fields[] = "description = ?";
+        $values[] = trim($data["description"]);
+    }
 
-    // TODO: If link is being updated, validate URL format
-    // Use filter_var with FILTER_VALIDATE_URL
-    // If invalid, return error response with 400 status
+    if (empty($fields)) {
+        sendResponse([
+            "success" => false,
+            "message" => "No fields provided to update"
+        ], 400);
+    }
 
-    // TODO: Build the complete UPDATE SQL query
-    // UPDATE resources SET field1 = ?, field2 = ? WHERE id = ?
+    $values[] = (int) $data["id"];
 
-    // TODO: Prepare the query
+    $query = "UPDATE resources SET " . implode(", ", $fields) . " WHERE id = ?";
 
-    // TODO: Bind parameters dynamically
-    // Bind all update values, then bind the resource ID at the end
+    $stmt = $db->prepare($query);
 
-    // TODO: Execute the query
-
-    // TODO: Check if update was successful
-    // If yes, return success response with 200 status
-    // If no, return error response with 500 status
+    if ($stmt->execute($values)) {
+        sendResponse([
+            "success" => true,
+            "message" => "Resource updated successfully"
+        ], 200);
+    } else {
+        sendResponse([
+            "success" => false,
+            "message" => "Failed to update resource"
+        ], 500);
+    }
 }
 
 
-/**
- * Function: Delete a resource
- * Method: DELETE
- * 
- * Parameters:
- *   - $resourceId: The resource's database ID
- * 
- * Response:
- *   - success: true/false
- *   - message: Success or error message
- * 
- * Note: This should also delete all associated comments
- */
 function deleteResource($db, $resourceId)
 {
-    // TODO: Validate that resource ID is provided and is numeric
-    // If not, return error response with 400 status
 
-    // TODO: Check if resource exists
-    // Prepare and execute a SELECT query
-    // If not found, return error response with 404 status
+    if (!is_numeric($resourceId)) {
+        sendResponse([
+            "success" => false,
+            "message" => "Invalid ID"
+        ], 400);
+    }
+ 
+    $query = "SELECT id FROM resources WHERE id = ?";
+    $stmt = $db->prepare($query);
+    $stmt->bindValue(1, $resourceId, PDO::PARAM_INT);
+    $stmt->execute();
 
-    // TODO: Begin a transaction (for data integrity)
-    // Use $db->beginTransaction()
+    $resource = $stmt->fetch(PDO::FETCH_ASSOC);
 
+    if (!$resource) {
+        sendResponse([
+            "success" => false,
+            "message" => "Resource not found"
+        ], 404);
+    }
+
+    $db->beginTransaction();
     try {
-        // TODO: First, delete all associated comments
-        // Prepare DELETE query for comments table
-        // DELETE FROM comments WHERE resource_id = ?
+ 
+        $query = "DELETE FROM comments WHERE resource_id = ?";
+        $stmt = $db->prepare($query);
+        $stmt->bindValue(1, $resourceId, PDO::PARAM_INT);
+        $stmt->execute();
 
-        // TODO: Bind resource_id and execute
+        $query = "DELETE FROM resources WHERE id = ?";
+        $stmt = $db->prepare($query);
+        $stmt->bindValue(1, $resourceId, PDO::PARAM_INT);
+        $stmt->execute();
 
-        // TODO: Then, delete the resource
-        // Prepare DELETE query for resources table
-        // DELETE FROM resources WHERE id = ?
+        $db->commit();
 
-        // TODO: Bind resource_id and execute
-
-        // TODO: Commit the transaction
-        // Use $db->commit()
-
-        // TODO: Return success response with 200 status
+        sendResponse([
+            "success" => true,
+            "message" => "Resource deleted successfully"
+        ], 200);
+        return;
 
     } catch (Exception $e) {
-        // TODO: Rollback the transaction on error
-        // Use $db->rollBack()
+ 
+        $db->rollBack();
 
-        // TODO: Return error response with 500 status
+        sendResponse([
+            "success" => false,
+            "message" => "Failed to delete resource"
+        ], 500);
     }
 }
 
