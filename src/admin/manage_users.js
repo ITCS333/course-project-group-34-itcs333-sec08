@@ -5,7 +5,7 @@
 let students = [];
 
 // FULL absolute path for API (fixes 404 and session issues)
-const API_URL = "/draft333/course-project-group-34-itcs333-sec08/src/admin/api/index.php";
+const API_URL = "api/index.php";
 
 // --- Select Elements ---
 const studentTableBody = document.querySelector("#student-table tbody");
@@ -93,11 +93,10 @@ async function handleAddStudent(event) {
   event.preventDefault();
 
   const name = document.getElementById("student-name").value.trim();
-  const student_id = document.getElementById("student-id").value.trim();
   const email = document.getElementById("student-email").value.trim();
   const password = document.getElementById("default-password").value.trim();
 
-  if (!name || !student_id || !email || !password) {
+  if (!name || !email || !password) {
     alert("Please fill out all fields.");
     return;
   }
@@ -106,7 +105,7 @@ async function handleAddStudent(event) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: JSON.stringify({ student_id, name, email, password })
+    body: JSON.stringify({ name, email, password })
   });
 
   const result = await response.json();
@@ -129,6 +128,9 @@ async function handleTableClick(event) {
   if (!id) return;
 
   if (event.target.classList.contains("delete-btn")) {
+    const confirmed = confirm("Are you sure you want to delete this student? This action cannot be undone.");
+    if (!confirmed) return;
+
     await fetch(`${API_URL}?student_id=${id}`, {
       method: "DELETE",
       credentials: "include"
@@ -167,7 +169,7 @@ function handleSearch(event) {
 
   const filtered = students.filter(s =>
     s.name.toLowerCase().includes(term) ||
-    s.student_id.toLowerCase().includes(term)
+    String(s.student_id).toLowerCase().includes(term)
   );
 
   renderTable(filtered);
@@ -186,9 +188,11 @@ function handleSort(event) {
   event.currentTarget.dataset.sort = dir === "asc" ? "desc" : "asc";
 
   students.sort((a, b) => {
+    const aVal = String(a[key]).toLowerCase();
+    const bVal = String(b[key]).toLowerCase();
     return dir === "asc"
-      ? a[key].localeCompare(b[key])
-      : b[key].localeCompare(a[key]);
+      ? aVal.localeCompare(bVal)
+      : bVal.localeCompare(aVal);
   });
 
   renderTable(students);
@@ -221,7 +225,7 @@ async function loadStudentsAndInitialize() {
 // ===========================
 async function initAdminPage() {
   try {
-    const res = await fetch("/draft333/course-project-group-34-itcs333-sec08/src/auth/api/session.php", {
+    const res = await fetch("../auth/api/session.php", {
       credentials: "include"
     });
 
@@ -229,7 +233,7 @@ async function initAdminPage() {
 
     if (!session.logged_in || session.user.role !== "admin") {
       alert("You must be logged in as an admin to access this page.");
-      window.location.href = "../../auth/login.html";
+      window.location.href = "../auth/login.html";
       return;
     }
 
@@ -237,7 +241,7 @@ async function initAdminPage() {
 
   } catch (err) {
     alert("Unable to verify session. Please log in again.");
-    window.location.href = "../../auth/login.html";
+    window.location.href = "../auth/login.html";
   }
 }
 

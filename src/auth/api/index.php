@@ -17,7 +17,7 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit;
 }
 
-require_once "connect.php";
+require_once __DIR__ . "/connect.php";
 
 $raw = file_get_contents("php://input");
 $data = json_decode($raw, true);
@@ -43,26 +43,17 @@ if (strlen($password) < 8) {
 try {
     $pdo = getDBConnection();
 
-    // Check admin
-    $stmt = $pdo->prepare("SELECT id, name, email, password FROM admins WHERE email = ?");
+    $stmt = $pdo->prepare("SELECT id, name, email, password, is_admin FROM users WHERE email = ? LIMIT 1");
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    $role = "admin";
-
-    // Check student
-    if (!$user) {
-        $stmt = $pdo->prepare("SELECT id, name, email, password FROM students WHERE email = ?");
-        $stmt->execute([$email]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        $role = "student";
-    }
 
     if (!$user || !password_verify($password, $user["password"])) {
         echo json_encode(["success" => false, "message" => "Invalid email or password"]);
         exit;
     }
 
-    // Save session
+    $role = ($user["is_admin"] == 1) ? "admin" : "student";
+
     $_SESSION["logged_in"] = true;
     $_SESSION["user_id"] = $user["id"];
     $_SESSION["user_name"] = $user["name"];
