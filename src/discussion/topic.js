@@ -19,6 +19,7 @@
 // --- Global Data Store ---
 let currentTopicId = null;
 let currentReplies = []; // Will hold replies for *this* topic
+let isEditMode = false; // Track if we're in edit mode
 
 // --- Element Selections ---
 // TODO: Select all the elements you added IDs for in step 2.
@@ -42,6 +43,7 @@ function getTopicIdFromURL() {
 
   let queryString = window.location.search;
   let urll=new URLSearchParams (queryString);
+  isEditMode = urll.get('edit') === 'true';
   return urll.get('id');
 
 
@@ -61,8 +63,34 @@ function renderOriginalPost(topic) {
   topicSubject.textContent = topic.subject;
   opMessage.textContent = topic.message;
   opFooter.textContent = `Posted by: ${topic.author} on ${topic.date}`;
-
-
+  
+  // If in edit mode, make content editable
+  if (isEditMode) {
+    topicSubject.contentEditable = true;
+    opMessage.contentEditable = true;
+    topicSubject.style.cursor = 'text';
+    opMessage.style.cursor = 'text';
+    topicSubject.style.padding = '5px';
+    opMessage.style.padding = '5px';
+    topicSubject.style.border = '1px solid #ccc';
+    opMessage.style.border = '1px solid #ccc';
+    
+    // Show save button in edit mode
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = 'Save Changes';
+    saveBtn.id = 'save-topic-btn';
+    saveBtn.style.marginTop = '10px';
+    saveBtn.style.backgroundColor = '#27ae60';
+    saveBtn.style.color = 'white';
+    saveBtn.addEventListener('click', function() {
+      topic.subject = topicSubject.textContent;
+      topic.message = opMessage.textContent;
+      alert('Topic updated successfully!');
+      window.location.href = 'baord.html';
+    });
+    
+    originalPost.appendChild(saveBtn);
+  }
 }
 
 /**
@@ -172,6 +200,28 @@ function handleAddReply(event) {
 }
 
 /**
+ * Handle edit button for the original post
+ */
+function handleEditPost() {
+  const subject = opMessage.textContent;
+  const newSubject = prompt('Edit message:', subject);
+  
+  if (newSubject && newSubject.trim()) {
+    opMessage.textContent = newSubject.trim();
+  }
+}
+
+/**
+ * Handle delete button for the original post
+ */
+function handleDeletePost() {
+  if (confirm('Are you sure you want to delete this topic?')) {
+    topicSubject.textContent = 'Topic has been deleted.';
+    originalPost.style.display = 'none';
+  }
+}
+
+/**
  * TODO: Implement the handleReplyListClick function.
  * This is an event listener on the `replyListContainer` (for delegation).
  * It should:
@@ -249,7 +299,18 @@ async function initializePage() {
     // Render the replies
     renderReplies();
     
-    // Add event listeners
+    // Add event listeners for post actions
+    const editPostBtn = document.getElementById('edit-post');
+    const deletePostBtn = document.getElementById('delete-post');
+    
+    if (editPostBtn) {
+      editPostBtn.addEventListener('click', handleEditPost);
+    }
+    if (deletePostBtn) {
+      deletePostBtn.addEventListener('click', handleDeletePost);
+    }
+    
+    // Add event listeners for reply form and list
     replyForm.addEventListener('submit', handleAddReply);
     replyListContainer.addEventListener('click', handleReplyListClick);
   } catch (error) {
