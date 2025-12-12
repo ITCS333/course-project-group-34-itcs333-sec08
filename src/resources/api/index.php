@@ -302,7 +302,7 @@ function deleteResource($db, $resourceId)
             "message" => "Invalid ID"
         ], 400);
     }
- 
+
     $query = "SELECT id FROM resources WHERE id = ?";
     $stmt = $db->prepare($query);
     $stmt->bindValue(1, $resourceId, PDO::PARAM_INT);
@@ -319,7 +319,7 @@ function deleteResource($db, $resourceId)
 
     $db->beginTransaction();
     try {
- 
+
         $query = "DELETE FROM comments WHERE resource_id = ?";
         $stmt = $db->prepare($query);
         $stmt->bindValue(1, $resourceId, PDO::PARAM_INT);
@@ -339,7 +339,7 @@ function deleteResource($db, $resourceId)
         return;
 
     } catch (Exception $e) {
- 
+
         $db->rollBack();
 
         sendResponse([
@@ -354,114 +354,136 @@ function deleteResource($db, $resourceId)
 // COMMENT FUNCTIONS
 // ============================================================================
 
-/**
- * Function: Get all comments for a specific resource
- * Method: GET with action=comments
- * 
- * Query Parameters:
- *   - resource_id: The resource's database ID (required)
- * 
- * Response:
- *   - success: true/false
- *   - data: Array of comment objects
- */
 function getCommentsByResourceId($db, $resourceId)
 {
-    // TODO: Validate that resource_id is provided and is numeric
-    // If not, return error response with 400 status
 
-    // TODO: Prepare SQL query to select comments for the resource
-    // SELECT id, resource_id, author, text, created_at 
-    // FROM comments 
-    // WHERE resource_id = ? 
-    // ORDER BY created_at ASC
+    if (!is_numeric($resourceId)) {
+        sendResponse([
+            "success" => false,
+            "message" => "Invalid ID"
+        ], 400);
+    }
 
-    // TODO: Bind the resource_id parameter
+    $query = "SELECT id, resource_id, author, text, created_at FROM comments WHERE resource_id = ? ORDER BY created_at ASC";
 
-    // TODO: Execute the query
+    $stmt = $db->prepare($query);
 
-    // TODO: Fetch all results as an associative array
+    $stmt->bindValue(1, $resourceId, PDO::PARAM_INT);
 
-    // TODO: Return success response with comments data
-    // Even if no comments exist, return empty array (not an error)
+    $stmt->execute();
+
+    $comment = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    sendResponse([
+        "success" => true,
+        "data" => $comment
+    ], 200);
 }
 
 
-/**
- * Function: Create a new comment
- * Method: POST with action=comment
- * 
- * Required JSON Body:
- *   - resource_id: The resource's database ID (required)
- *   - author: Name of the comment author (required)
- *   - text: Comment text content (required)
- * 
- * Response:
- *   - success: true/false
- *   - message: Success or error message
- *   - id: ID of created comment (on success)
- */
+
 function createComment($db, $data)
 {
-    // TODO: Validate required fields
-    // Check if resource_id, author, and text are provided and not empty
-    // If any required field is missing, return error response with 400 status
 
-    // TODO: Validate that resource_id is numeric
-    // If not, return error response with 400 status
+    if (
+        !isset($data['resource_id']) || empty($data['resource_id']) ||
+        !isset($data['author']) || empty($data['author']) ||
+        !isset($data['text']) || empty($data['text'])
+    ) {
+        sendResponse([
+            'success' => false,
+            "message" => "required fields are: resource_id, author, and text"
+        ], 400);
+    }
 
-    // TODO: Check if the resource exists
-    // Prepare and execute SELECT query on resources table
-    // If resource not found, return error response with 404 status
+    if (!is_numeric($data['resource_id'])) {
+        sendResponse([
+            'success' => false,
+            "message" => "Invalid: id must be numric"
+        ], 400);
+    }
 
-    // TODO: Sanitize input data
-    // Trim whitespace from author and text
+    $query = "SELECT id FROM resources WHERE id = ?";
+    $stmt = $db->prepare($query);
+    $stmt->bindValue(1, $data["resource_id"], PDO::PARAM_INT);
+    $stmt->execute();
+    $resource = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$resource) {
+        sendResponse([
+            "success" => false,
+            "message" => "Resource not found"
+        ], 404);
+    }
 
-    // TODO: Prepare INSERT query
-    // INSERT INTO comments (resource_id, author, text) VALUES (?, ?, ?)
+    $data['author'] = trim($data['author']);
+    $data['text'] = trim($data['text']);
 
-    // TODO: Bind parameters
-    // Bind resource_id, author, and text
+    $query = "INSERT INTO comments (resource_id, author, text) VALUES (?, ?, ?)";
 
-    // TODO: Execute the query
+    $stmt = $db->prepare($query);
+    $stmt->bindValue(1, $data["resource_id"], PDO::PARAM_INT);
+    $stmt->bindValue(2, $data["author"]);
+    $stmt->bindValue(3, $data["text"]);
 
-    // TODO: Check if insert was successful
-    // If yes, get the last inserted ID using $db->lastInsertId()
-    // Return success response with 201 status and the new comment ID
-    // If no, return error response with 500 status
+    if ($stmt->execute()) {
+        $newId = $db->lastInsertId();
+        sendResponse([
+            "success" => true,
+            "message" => "Comment created successfully",
+            "id" => $newId
+        ], 201);
+    } else {
+        sendResponse([
+            "success" => false,
+            "message" => "Failed to create comment"
+        ], 500);
+    }
 }
 
 
-/**
- * Function: Delete a comment
- * Method: DELETE with action=delete_comment
- * 
- * Query Parameters or JSON Body:
- *   - comment_id: The comment's database ID (required)
- * 
- * Response:
- *   - success: true/false
- *   - message: Success or error message
- */
+
 function deleteComment($db, $commentId)
 {
-    // TODO: Validate that comment_id is provided and is numeric
-    // If not, return error response with 400 status
 
-    // TODO: Check if comment exists
-    // Prepare and execute a SELECT query
-    // If not found, return error response with 404 status
+    if (!is_numeric($commentId)) {
+        sendResponse([
+            "success" => false,
+            "message" => "Comment ID must be provided"
+        ], 400);
+    }
 
-    // TODO: Prepare DELETE query
-    // DELETE FROM comments WHERE id = ?
+    $query = "SELECT id FROM comments WHERE id = ?";
+    $stmt = $db->prepare($query);
+    $stmt->bindValue(1, $commentId, PDO::PARAM_INT);
+    $stmt->execute();
 
-    // TODO: Bind the comment_id parameter
+    $comment = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // TODO: Execute the query
+    if (!$comment) {
+        sendResponse([
+            "success" => false,
+            "message" => "Comment not found"
+        ], 404);
+    }
 
-    // TODO: Check if delete was successful
-    // If yes, return success response with 200 status
-    // If no, return error response with 500 status
+    $query = "DELETE FROM comments WHERE id = ?";
+    $stmt = $db->prepare($query);
+
+    $stmt->bindValue(1, $commentId, PDO::PARAM_INT);
+
+    $stmt->execute();
+
+    if ($stmt->rowCount() > 0) {
+        sendResponse([
+            "success" => true,
+            "message" => "Comment deleted successfully"
+        ], 200);
+    } else {
+        sendResponse([
+            "success" => false,
+            "message" => "Failed to delete comment"
+        ], 500);
+    }
 }
 
 
