@@ -142,7 +142,7 @@ function handleTopicListClick(event) {
 async function loadAndInitialize() {
   // ... your implementation here ...
   try {
-    const response = await fetch("topics.json");
+    const response = await fetch("api/topics.json");
     const data = await response.json();
     topics = data;
     renderTopics();
