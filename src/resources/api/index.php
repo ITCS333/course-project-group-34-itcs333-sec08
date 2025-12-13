@@ -50,20 +50,14 @@
 // HEADERS AND INITIALIZATION
 // ============================================================================
 
-// TODO: Set headers for JSON response and CORS
-// Set Content-Type to application/json
 header("Content-Type: application/json");
-// Allow cross-origin requests (CORS) if needed
 header("Access-Control-Allow-Origin: *");
-// Allow specific HTTP methods (GET, POST, PUT, DELETE, OPTIONS)
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-// Allow specific headers (Content-Type, Authorization)
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
 
 
-// TODO: Handle preflight OPTIONS request
-// If the request method is OPTIONS, return 200 status and exit
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
@@ -73,24 +67,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once __DIR__ . '/../config/Database.php';
 
 
-// TODO: Get the PDO database connection
-// Example: $database = new Database();
-// Example: $db = $database->getConnection();
 $database = new Database();
 $db = $database->getConnection();
 
-// TODO: Get the HTTP request method
-// Use $_SERVER['REQUEST_METHOD']
 $method = $_SERVER['REQUEST_METHOD'];
 
-// TODO: Get the request body for POST and PUT requests
-// Use file_get_contents('php://input') to get raw POST data
-// Decode JSON data using json_decode() with associative array parameter
 $rawData = file_get_contents('php://input');
 $data = json_decode($rawData, true) ?? [];
 
-// TODO: Parse query parameters
-// Get 'action', 'id', 'resource_id', 'comment_id' from $_GET
+
 $id = $_GET['id'] ?? null;
 $action = $_GET['action'] ?? null;
 $resourceId = $_GET['resource_id'] ?? null;
@@ -180,21 +165,23 @@ function getResourceById($db, $resourceId)
 
 function createResource($db, $data)
 {
-    if (!isset($data['title']) || !isset($data['link']) || empty(trim($data['title'])) || empty(trim($data['link']))) {
+    $check = validateRequiredFields($data, ['title', 'link']);
+
+    if (!$check['valid']) {
         sendResponse([
             "success" => false,
             "message" => "Title and link are required"
         ], 400);
     }
 
-    $data["title"] = trim($data["title"]);
+    $data["title"] = sanitizeInput($data["title"]);
     $data["link"] = trim($data["link"]);
     if (isset($data["description"])) {
-        $data["description"] = trim($data["description"]);
+        $data["description"] = sanitizeInput($data["description"]);
     } else {
         $data["description"] = "";
     }
-    if (!filter_var($data["link"], FILTER_VALIDATE_URL)) {
+    if (!validateUrl($data["link"])) {
         sendResponse([
             "success" => false,
             "message" => "Invalid link"
@@ -248,10 +235,10 @@ function updateResource($db, $data)
     $values = [];
     if (isset($data["title"]) && !empty(trim($data["title"]))) {
         $fields[] = "title = ?";
-        $values[] = trim($data["title"]);
+        $values[] = sanitizeInput($data["title"]);
     }
     if (isset($data["link"]) && !empty(trim($data["link"]))) {
-        if (!filter_var($data['link'], FILTER_VALIDATE_URL)) {
+        if (!validateUrl($data["link"])) {
             sendResponse([
                 'success' => false,
                 'message' => "Invalid link"
@@ -263,7 +250,7 @@ function updateResource($db, $data)
 
     if (isset($data["description"])) {
         $fields[] = "description = ?";
-        $values[] = trim($data["description"]);
+        $values[] = sanitizeInput($data["description"]);
     }
 
     if (empty($fields)) {
@@ -384,12 +371,9 @@ function getCommentsByResourceId($db, $resourceId)
 
 function createComment($db, $data)
 {
+    $check = validateRequiredFields($data, ['resource_id', 'author', 'text']);
 
-    if (
-        !isset($data['resource_id']) || empty($data['resource_id']) ||
-        !isset($data['author']) || empty($data['author']) ||
-        !isset($data['text']) || empty($data['text'])
-    ) {
+    if (!$check['valid']) {
         sendResponse([
             'success' => false,
             "message" => "required fields are: resource_id, author, and text"
@@ -415,8 +399,8 @@ function createComment($db, $data)
         ], 404);
     }
 
-    $data['author'] = trim($data['author']);
-    $data['text'] = trim($data['text']);
+    $data['author'] = sanitizeInput($data['author']);
+    $data['text'] = sanitizeInput($data['text']);
 
     $query = "INSERT INTO comments (resource_id, author, text) VALUES (?, ?, ?)";
 
@@ -492,65 +476,79 @@ function deleteComment($db, $commentId)
 // ============================================================================
 
 try {
-    // TODO: Route the request based on HTTP method and action parameter
 
     if ($method === 'GET') {
-        // TODO: Check the action parameter to determine which function to call
+        $action = $_GET['action'] ?? null;
 
-        // If action is 'comments', get comments for a resource
-        // TODO: Check if action === 'comments'
-        // Get resource_id from query parameters
-        // Call getCommentsByResourceId()
+        if ($action === 'comments') {
+            if (!isset($_GET['resource_id'])) {
+                sendResponse([
+                    'success' => false,
+                    'message' => 'Invalid action'
+                ], 400);
+            }
+            getCommentsByResourceId($db, $_GET['resource_id']);
+        } elseif (isset($_GET['id'])) {
+            getResourceById($db, $_GET['id']);
 
-        // If id parameter exists, get single resource
-        // TODO: Check if 'id' parameter exists in $_GET
-        // Call getResourceById()
-
-        // Otherwise, get all resources
-        // TODO: Call getAllResources()
+        } else {
+            getAllResources($db);
+        }
 
     } elseif ($method === 'POST') {
-        // TODO: Check the action parameter to determine which function to call
 
-        // If action is 'comment', create a new comment
-        // TODO: Check if action === 'comment'
-        // Call createComment()
+        $action = $_GET['action'] ?? null;
 
-        // Otherwise, create a new resource
-        // TODO: Call createResource()
+        if ($action === 'comment') {
+            createComment($db, $data);
+        } else {
+            createResource($db, $data);
+        }
 
     } elseif ($method === 'PUT') {
-        // TODO: Update a resource
-        // Call updateResource()
+
+        updateResource($db, $data);
 
     } elseif ($method === 'DELETE') {
-        // TODO: Check the action parameter to determine which function to call
 
-        // If action is 'delete_comment', delete a comment
-        // TODO: Check if action === 'delete_comment'
-        // Get comment_id from query parameters or request body
-        // Call deleteComment()
+        $action = $_GET['action'] ?? null;
 
-        // Otherwise, delete a resource
-        // TODO: Get resource id from query parameter or request body
-        // Call deleteResource()
+        if ($action === 'delete_comment') {
+            if (!isset($_GET['comment_id'])) {
+                sendResponse([
+                    'success' => false,
+                    'message' => 'Invalid action'
+                ], 400);
+            }
+            deleteComment($db, $_GET['comment_id']);
+        } elseif (isset($_GET['id'])) {
+            deleteResource($db, $_GET['id']);
+        }
 
     } else {
-        // TODO: Return error for unsupported methods
-        // Set HTTP status to 405 (Method Not Allowed)
-        // Return JSON error message using sendResponse()
+        sendResponse([
+            'success' => false,
+            'message' => 'Method Not Allowed',
+        ], 405);
     }
 
 } catch (PDOException $e) {
-    // TODO: Handle database errors
-    // Log the error message (optional, use error_log())
-    // Return generic error response with 500 status
-    // Do NOT expose detailed error messages to the client in production
+
+    error_log($e->getMessage());
+
+    sendResponse([
+        'success' => false,
+        'message' => 'Internal Server Error'
+    ], 500);
 
 } catch (Exception $e) {
-    // TODO: Handle general errors
-    // Log the error message (optional)
-    // Return error response with 500 status
+    error_log($e->getMessage());
+
+    sendResponse([
+        'success' => false,
+        'message' => 'Internal Server Error'
+    ], 500);
+
 }
 
 
@@ -566,15 +564,14 @@ try {
  */
 function sendResponse($data, $statusCode = 200)
 {
-    // TODO: Set HTTP response code using http_response_code()
+    http_response_code($statusCode);
 
-    // TODO: Ensure data is an array
-    // If not, wrap it in an array
+    if (!is_array($data)) {
+        $data = ['data' => $data];
+    }
 
-    // TODO: Echo JSON encoded data
-    // Use JSON_PRETTY_PRINT for readability (optional)
+    echo json_encode($data, JSON_PRETTY_PRINT);
 
-    // TODO: Exit to prevent further execution
     exit;
 }
 
@@ -587,8 +584,8 @@ function sendResponse($data, $statusCode = 200)
  */
 function validateUrl($url)
 {
-    // TODO: Use filter_var with FILTER_VALIDATE_URL
-    // Return true if valid, false otherwise
+    return filter_var($url, FILTER_VALIDATE_URL) !== false;
+
 }
 
 
@@ -600,14 +597,12 @@ function validateUrl($url)
  */
 function sanitizeInput($data)
 {
-    // TODO: Trim whitespace using trim()
+    $data = trim($data);
 
-    // TODO: Strip HTML tags using strip_tags()
+    $data = strip_tags($data);
 
-    // TODO: Convert special characters using htmlspecialchars()
-    // Use ENT_QUOTES to escape both double and single quotes
-
-    // TODO: Return sanitized data
+    $data = htmlspecialchars($data, ENT_QUOTES);
+    return $data;
 }
 
 
@@ -620,14 +615,18 @@ function sanitizeInput($data)
  */
 function validateRequiredFields($data, $requiredFields)
 {
-    // TODO: Initialize empty array for missing fields
+    $missing=[];
 
-    // TODO: Loop through required fields
-    // Check if each field exists in data and is not empty
-    // If missing or empty, add to missing fields array
+    foreach ($requiredFields as $field) {
+        if(!isset($data[$field])|| empty(trim($data[$field]))){
+            $missing[]=$field;
+        }
+    }
 
-    // TODO: Return result array
-    // ['valid' => (count($missing) === 0), 'missing' => $missing]
+    return[
+        'valid' => (count($missing) === 0), 
+        'missing' => $missing
+    ];
 }
 
 ?>
