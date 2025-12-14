@@ -240,7 +240,10 @@ async function initAdminPage() {
     loadStudentsAndInitialize();
 
   } catch (err) {
+    if (typeof alert !== "undefined") {
     alert("Unable to verify session. Please log in again.");
+}
+
     window.location.href = "../auth/login.html";
   }
 }
