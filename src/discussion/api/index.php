@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
-require_once '../auth/api/connect.php';
+require_once '../../auth/api/connect.php';
 
 // TODO: Include the database connection class
 // Assume the Database class has a method getConnection() that returns a PDO instance
