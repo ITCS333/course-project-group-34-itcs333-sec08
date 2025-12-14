@@ -146,7 +146,7 @@ function handleTableClick(event) {
  * 5. Add the 'click' event listener to `resourcesTableBody` (calls `handleTableClick`).
  */
 async function loadAndInitialize() {
-  const response = await fetch('resources.json');
+  const response = await fetch('api/resources.json');
   const data = await response.json();
   resources=data;
   renderTable();
