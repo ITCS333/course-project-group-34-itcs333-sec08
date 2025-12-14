@@ -207,8 +207,11 @@ try {
     } else {
         sendResponse(["success" => false, "message" => "Method not allowed"], 405);
     }
+} catch (PDOException $e) {
+    sendResponse(["success" => false, "message" => "Database error"], 500);
 } catch (Exception $e) {
     sendResponse(["success" => false, "message" => $e->getMessage()], 500);
 }
+
 
 ?>

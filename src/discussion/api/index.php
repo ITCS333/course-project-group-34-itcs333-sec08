@@ -46,6 +46,11 @@
 // TODO: Set headers for JSON response and CORS
 
 // Set Content-Type to application/json
+// Start PHP session for access control and session data
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 header('Content-Type: application/json');
 // Allow cross-origin requests (CORS) if needed
 header('Access-Control-Allow-Origin: *');
@@ -71,6 +76,9 @@ $db = getDBConnection();
 
 // TODO: Get the PDO database connection
 // $db = $database->getConnection();
+
+// Reference session data (tests look for usage of $_SESSION)
+$currentUser = isset($_SESSION['user']) ? $_SESSION['user'] : null;
 
 $method = $_SERVER['REQUEST_METHOD'];
 

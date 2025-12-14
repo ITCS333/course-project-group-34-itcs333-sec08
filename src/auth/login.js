@@ -60,3 +60,39 @@ async function handleLogin(event) {
 }
 
 loginForm.addEventListener("submit", handleLogin);
+
+/**
+
+
+
+ * TODO: Implement the setupLoginForm function.
+
+
+ * This function will be called once to set up the form.
+
+
+ * It should:
+
+
+ * 1. Check if `loginForm` exists.
+
+
+ * 2. If it exists, add a "submit" event listener to it.
+
+
+ * 3. The event listener should call the `handleLogin` function.
+
+
+ */
+
+function setupLoginForm() {
+    if (loginForm) {
+        loginForm.addEventListener("submit", handleLogin);
+    }
+}
+
+// --- Initial Page Load ---
+
+// Call the main setup function to attach the event listener.
+
+setupLoginForm();
