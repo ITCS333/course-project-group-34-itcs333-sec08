@@ -122,10 +122,23 @@ function handleCreateTopic(event) {
  */
 function handleTopicListClick(event) {
   // ... your implementation here ...
+  // Handle delete button
   if (event.target.classList.contains("delete-btn")) {
     const topicId = event.target.getAttribute("data-id");
-    topics = topics.filter((topic) => topic.id !== topicId);
-    renderTopics();
+    if (confirm("Are you sure you want to delete this topic?")) {
+      topics = topics.filter((topic) => topic.id !== topicId);
+      renderTopics();
+    }
+  }
+  
+  // Handle edit button - navigate to topic page with edit mode
+  if (event.target.classList.contains("edit-btn")) {
+    const article = event.target.closest("article");
+    const topicLink = article.querySelector("a");
+    const href = topicLink.getAttribute("href");
+    
+    // Navigate to topic page with edit parameter
+    window.location.href = href + "&edit=true";
   }
 }
 
@@ -142,7 +155,7 @@ function handleTopicListClick(event) {
 async function loadAndInitialize() {
   // ... your implementation here ...
   try {
-    const response = await fetch("topics.json");
+    const response = await fetch("api/topics.json");
     const data = await response.json();
     topics = data;
     renderTopics();
