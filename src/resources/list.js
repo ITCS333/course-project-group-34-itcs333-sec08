@@ -53,16 +53,20 @@ function createResourceArticle(resource) {
  * - Call `createResourceArticle()`.
  * - Append the returned <article> element to `listSection`.
  */
-async function loadResources() {
-  const response = await fetch('resources.json'); 
-  const data = await response.json();
-  resourceSection.innerHTML="";
-  data.forEach(function(respon){
-    const article=createResourceArticle(respon);
-    resourceSection.appendChild(article);
-  });
 
+async function loadResources() {
+  const response = await fetch('api/index.php');
+  const json = await response.json();
+
+  const data = json.data;
+
+  resourceSection.innerHTML = "";
+
+  data.forEach(resource => {
+    resourceSection.appendChild(createResourceArticle(resource));
+  });
 }
+
 
 // --- Initial Page Load ---
 // Call the function to populate the page.

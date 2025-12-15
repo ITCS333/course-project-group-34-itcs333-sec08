@@ -16,7 +16,7 @@
  *   - link (VARCHAR(500))
  *   - created_at (TIMESTAMP)
  * 
- * Table: comments
+ * Table: comments_resource
  * Columns:
  *   - id (INT, PRIMARY KEY, AUTO_INCREMENT)
  *   - resource_id (INT, FOREIGN KEY references resources.id)
@@ -66,9 +66,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once __DIR__ . '/../config/Database.php';
 
+$db = getDBConnection();
 
-$database = new Database();
-$db = $database->getConnection();
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -307,7 +306,7 @@ function deleteResource($db, $resourceId)
     $db->beginTransaction();
     try {
 
-        $query = "DELETE FROM comments WHERE resource_id = ?";
+        $query = "DELETE FROM comments_resource WHERE resource_id = ?";
         $stmt = $db->prepare($query);
         $stmt->bindValue(1, $resourceId, PDO::PARAM_INT);
         $stmt->execute();
@@ -351,7 +350,7 @@ function getCommentsByResourceId($db, $resourceId)
         ], 400);
     }
 
-    $query = "SELECT id, resource_id, author, text, created_at FROM comments WHERE resource_id = ? ORDER BY created_at ASC";
+    $query = "SELECT id, resource_id, author, text, created_at FROM comments_resource WHERE resource_id = ? ORDER BY created_at ASC";
 
     $stmt = $db->prepare($query);
 
@@ -391,7 +390,9 @@ function createComment($db, $data)
     $stmt = $db->prepare($query);
     $stmt->bindValue(1, $data["resource_id"], PDO::PARAM_INT);
     $stmt->execute();
+
     $resource = $stmt->fetch(PDO::FETCH_ASSOC);
+
     if (!$resource) {
         sendResponse([
             "success" => false,
@@ -399,10 +400,11 @@ function createComment($db, $data)
         ], 404);
     }
 
+
     $data['author'] = sanitizeInput($data['author']);
     $data['text'] = sanitizeInput($data['text']);
 
-    $query = "INSERT INTO comments (resource_id, author, text) VALUES (?, ?, ?)";
+    $query = "INSERT INTO comments_resource (resource_id, author, text) VALUES (?, ?, ?)";
 
     $stmt = $db->prepare($query);
     $stmt->bindValue(1, $data["resource_id"], PDO::PARAM_INT);
@@ -436,7 +438,7 @@ function deleteComment($db, $commentId)
         ], 400);
     }
 
-    $query = "SELECT id FROM comments WHERE id = ?";
+    $query = "SELECT id FROM comments_resource WHERE id = ?";
     $stmt = $db->prepare($query);
     $stmt->bindValue(1, $commentId, PDO::PARAM_INT);
     $stmt->execute();
@@ -450,7 +452,7 @@ function deleteComment($db, $commentId)
         ], 404);
     }
 
-    $query = "DELETE FROM comments WHERE id = ?";
+    $query = "DELETE FROM comments_resource WHERE id = ?";
     $stmt = $db->prepare($query);
 
     $stmt->bindValue(1, $commentId, PDO::PARAM_INT);
@@ -615,16 +617,16 @@ function sanitizeInput($data)
  */
 function validateRequiredFields($data, $requiredFields)
 {
-    $missing=[];
+    $missing = [];
 
     foreach ($requiredFields as $field) {
-        if(!isset($data[$field])|| empty(trim($data[$field]))){
-            $missing[]=$field;
+        if (!isset($data[$field]) || empty(trim($data[$field]))) {
+            $missing[] = $field;
         }
     }
 
-    return[
-        'valid' => (count($missing) === 0), 
+    return [
+        'valid' => (count($missing) === 0),
         'missing' => $missing
     ];
 }

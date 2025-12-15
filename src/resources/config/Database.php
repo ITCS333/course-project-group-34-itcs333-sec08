@@ -1,25 +1,21 @@
 <?php
-class Database {
-    private $host = "localhost";
-    private $db_name = "web_db";
-    private $username = "root";
-    private $password = "";
-    private $conn;
+$host = 'localhost';
+$db = 'course';
+$user = 'admin';
+$pass = 'password123';
 
-    public function getConnection() {
-        try {
-            $this->conn = new PDO(
-                "mysql:host=" . $this->host . ";dbname=" . $this->db_name,
-                $this->username,
-                $this->password
-            );
+function getDBConnection()
+{
+    global $host, $db, $user, $pass;
 
-            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $dsn = "mysql:host=$host;dbname=$db;charset=utf8mb4";
 
-        } catch (PDOException $e) {
-            die("Connection failed: " . $e->getMessage());
-        }
+    $options = [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false,
+    ];
 
-        return $this->conn;
-    }
+    return new PDO($dsn, $user, $pass, $options);
 }
+?>

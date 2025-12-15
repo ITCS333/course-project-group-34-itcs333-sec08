@@ -41,8 +41,8 @@ const textArea = document.getElementById('new-comment');
  */
 function getResourceIdFromURL() {
   const queryString = window.location.search;
-  const object=new URLSearchParams(queryString);
-  const ID =object.get('id');
+  const object = new URLSearchParams(queryString);
+  const ID = object.get('id');
   return ID;
 
 }
@@ -73,13 +73,13 @@ function createCommentArticle(comment) {
   const Author = document.createElement('footer');
 
   Author.textContent = `Posted by: ${comment.author}`;
-  Text.textContent=comment.text
+  Text.textContent = comment.text
 
   Article.appendChild(Text);
   Article.appendChild(Author);
 
   return Article;
-} 
+}
 
 /**
  * TODO: Implement the renderComments function.
@@ -90,8 +90,8 @@ function createCommentArticle(comment) {
  * append the resulting <article> to `commentList`.
  */
 function renderComments() {
-  Div.innerHTML="";
-  currentComments.forEach(function(comment){
+  Div.innerHTML = "";
+  currentComments.forEach(function (comment) {
     Div.appendChild(createCommentArticle(comment))
   });
 }
@@ -109,18 +109,69 @@ function renderComments() {
  * 6. Call `renderComments()` to refresh the list.
  * 7. Clear the `newComment` textarea.
  */
+
+// async function handleAddComment(event) {
+//   event.preventDefault();
+
+//   const commentValue = textArea.value.trim();
+//   if (commentValue === "") {
+//     return;
+//   }
+
+//   try {
+//     // Send comment to backend (CREATE)
+//     const response = await fetch(
+//       "/src/resources/api/index.php?action=comment",
+//       {
+//         method: "POST",
+//         headers: {
+//           "Content-Type": "application/json"
+//         },
+//         body: JSON.stringify({
+//           resource_id: currentResourceId,
+//           author: "Student", 
+//           text: commentValue
+//         })
+//       }
+//     );
+
+//     const result = await response.json();
+
+//     if (!result.success) {
+//       alert("Failed to post comment");
+//       return;
+//     }
+
+//     // Re-fetch comments from DB
+//     const commentsResponse = await fetch(
+//       `/src/resources/api/index.php?action=comments&resource_id=${currentResourceId}`
+//     );
+//     const commentsJson = await commentsResponse.json();
+
+//     currentComments = commentsJson.data;
+//     renderComments();
+
+//     // Clear textarea
+//     textArea.value = "";
+
+//   } catch (error) {
+//     console.error(error);
+//     alert("Error posting comment");
+//   }
+// }
+
 function handleAddComment(event) {
-event.preventDefault();
-  const commentValue=textArea.value;
-   if (commentValue===""){
+  event.preventDefault();
+  const commentValue = textArea.value;
+  if (commentValue === "") {
     return
-   }
+  }
   const newObject = { author: 'Student', text: commentValue };
   currentComments.push(newObject);
 
   renderComments();
 
-  textArea.value ="";
+  textArea.value = "";
 }
 
 /**
@@ -141,34 +192,51 @@ event.preventDefault();
  * 8. If the resource is not found, display an error in `resourceTitle`.
  */
 async function initializePage() {
-  const id=getResourceIdFromURL();
-  currentResourceId=id;
-  if (!currentResourceId){
-    mainHeader.textContent="Resource not found.";
-    return;
-  }
+  const id = getResourceIdFromURL();
+  currentResourceId = id;
 
-  const [resourcesResponse, commentsResponse] = await Promise.all([
-    fetch("api/resources.json"),
-    fetch("api/comments.json")
-  ]);
-
-  const resourceData=await resourcesResponse.json();
-  const commentsData = await commentsResponse.json();
-
-  const resource = resourceData.find(r => String(r.id) === String(currentResourceId));
-
-  currentComments = commentsData[currentResourceId] || [];
-
-  if (!resource) {
+  if (!currentResourceId) {
     mainHeader.textContent = "Resource not found.";
     return;
   }
 
-  renderResourceDetails(resource);
-  renderComments();
-  theForm.addEventListener("submit", handleAddComment);
+  try {
+    // 🔹 Get resource
+    const resourceResponse = await fetch(
+      `/src/resources/api/index.php?id=${currentResourceId}`
+    );
+    const resourceJson = await resourceResponse.json();
+
+    if (!resourceJson.success) {
+      mainHeader.textContent = "Resource not found.";
+      return;
+    }
+
+    const resource = resourceJson.data;
+    renderResourceDetails(resource);
+
+    // 🔹 Get comments
+    const commentsResponse = await fetch(
+      `/src/resources/api/index.php?action=comments&resource_id=${currentResourceId}`
+    );
+    const commentsJson = await commentsResponse.json();
+
+    if (commentsJson.success && Array.isArray(commentsJson.data)) {
+      currentComments = commentsJson.data;
+    } else {
+      currentComments = [];
+    }
+
+    renderComments();
+
+    theForm.addEventListener("submit", handleAddComment);
+
+  } catch (error) {
+    mainHeader.textContent = "Error loading resource.";
+  }
 }
+
+
 
 // --- Initial Page Load ---
 initializePage();

@@ -4,10 +4,10 @@
   Instructions:
   1. Link this file to `admin.html` using:
      <script src="admin.js" defer></script>
-  
+
   2. In `admin.html`, add an `id="resources-tbody"` to the <tbody> element
      inside your `resources-table`.
-  
+
   3. Implement the TODOs below.
 */
 
@@ -35,18 +35,18 @@ const resourcesTbody = document.getElementById('resources-tbody');
  * - A "Delete" button with class "delete-btn" and `data-id="${id}"`.
  */
 function createResourceRow(resource) {
-  const row=document.createElement('tr')
+  const row = document.createElement('tr')
   const dataTitle = document.createElement('td');
   const dataDescription = document.createElement('td');
-  const buttomColumn= document.createElement('td');
+  const buttomColumn = document.createElement('td');
   const editButton = document.createElement('button');
   const deleteButton = document.createElement('button');
 
-  dataTitle.textContent=resource.title;
-  dataDescription.textContent=resource.description;
-  editButton.textContent="Edit";
-  deleteButton.textContent ="Delete";
-  
+  dataTitle.textContent = resource.title;
+  dataDescription.textContent = resource.description;
+  editButton.textContent = "Edit";
+  deleteButton.textContent = "Delete";
+
   editButton.dataset.id = resource.id;
   deleteButton.dataset.id = resource.id;
 
@@ -72,9 +72,9 @@ function createResourceRow(resource) {
  * append the resulting <tr> to `resourcesTableBody`.
  */
 function renderTable() {
-  resourcesTbody.innerHTML="";
+  resourcesTbody.innerHTML = "";
 
-  resources.forEach(function(resource){
+  resources.forEach(function (resource) {
     resourcesTbody.appendChild(createResourceRow(resource));
   });
 }
@@ -90,30 +90,29 @@ function renderTable() {
  * 5. Call `renderTable()` to refresh the list.
  * 6. Reset the form.
  */
-function handleAddResource(event) {
+async function handleAddResource(event) {
   event.preventDefault();
 
-  const theTitle = document.getElementById("resource-title");
-  const theDescription = document.getElementById("resource-description");
-  const thelink = document.getElementById("resource-link");
+  const title = document.getElementById("resource-title").value;
+  const description = document.getElementById("resource-description").value;
+  const link = document.getElementById("resource-link").value;
 
-  const titleValue= theTitle.value;
-  const descriptionValue=theDescription.value;
-  const linkValue=thelink.value;
+  const response = await fetch('/src/resources/api/index.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, description, link })
+  });
 
-  const newResource = {
-    id: `res_${Date.now()}`,
-    title: titleValue ,
-    description: descriptionValue,
-    link:linkValue
-  };
+  const result = await response.json();
 
-  resources.push(newResource);
-
-  renderTable();
-
-  event.target.reset();
+  if (result.success) {
+    await loadAndInitialize();
+    event.target.reset();
+  } else {
+    alert(result.message);
+  }
 }
+
 
 /**
  * TODO: Implement the handleTableClick function.
@@ -125,15 +124,27 @@ function handleAddResource(event) {
  * with the matching ID (in-memory only).
  * 4. Call `renderTable()` to refresh the list.
  */
-function handleTableClick(event) {
-
+async function handleTableClick(event) {
   if (event.target.classList.contains("delete-btn")) {
-    const idToDelete=event.target.dataset.id;
-    resources = resources.filter(row => row.id !== idToDelete);
-    renderTable();
-  }
+    const id = event.target.dataset.id;
 
+    if (!confirm("Are you sure?")) return;
+
+    const response = await fetch(
+      `/src/resources/api/index.php?id=${id}`,
+      { method: 'DELETE' }
+    );
+
+    const result = await response.json();
+
+    if (result.success) {
+      await loadAndInitialize();
+    } else {
+      alert(result.message);
+    }
+  }
 }
+
 
 /**
  * TODO: Implement the loadAndInitialize function.
@@ -146,14 +157,16 @@ function handleTableClick(event) {
  * 5. Add the 'click' event listener to `resourcesTableBody` (calls `handleTableClick`).
  */
 async function loadAndInitialize() {
-  const response = await fetch('api/resources.json');
-  const data = await response.json();
-  resources=data;
+  const response = await fetch('/src/resources/api/index.php');
+  const json = await response.json();
+
+  resources = json.data;
   renderTable();
+
   resourceForm.addEventListener("submit", handleAddResource);
   resourcesTbody.addEventListener("click", handleTableClick);
-
 }
+
 
 // --- Initial Page Load ---
 // Call the main async function to start the application.
