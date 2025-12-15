@@ -110,69 +110,53 @@ function renderComments() {
  * 7. Clear the `newComment` textarea.
  */
 
-// async function handleAddComment(event) {
-//   event.preventDefault();
-
-//   const commentValue = textArea.value.trim();
-//   if (commentValue === "") {
-//     return;
-//   }
-
-//   try {
-//     // Send comment to backend (CREATE)
-//     const response = await fetch(
-//       "/src/resources/api/index.php?action=comment",
-//       {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json"
-//         },
-//         body: JSON.stringify({
-//           resource_id: currentResourceId,
-//           author: "Student", 
-//           text: commentValue
-//         })
-//       }
-//     );
-
-//     const result = await response.json();
-
-//     if (!result.success) {
-//       alert("Failed to post comment");
-//       return;
-//     }
-
-//     // Re-fetch comments from DB
-//     const commentsResponse = await fetch(
-//       `/src/resources/api/index.php?action=comments&resource_id=${currentResourceId}`
-//     );
-//     const commentsJson = await commentsResponse.json();
-
-//     currentComments = commentsJson.data;
-//     renderComments();
-
-//     // Clear textarea
-//     textArea.value = "";
-
-//   } catch (error) {
-//     console.error(error);
-//     alert("Error posting comment");
-//   }
-// }
-
-function handleAddComment(event) {
+async function handleAddComment(event) {
   event.preventDefault();
-  const commentValue = textArea.value;
-  if (commentValue === "") {
-    return
+
+  const commentValue = textArea.value.trim();
+  if (commentValue === "") return;
+
+  try {
+    const response = await fetch(
+      "/src/resources/api/index.php?action=comment",
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          resource_id: currentResourceId,
+          text: commentValue
+        })
+      }
+    );
+
+    const result = await response.json();
+    if (!result.success) {
+      alert("Failed to post comment");
+      return;
+    }
+
+    const commentsResponse = await fetch(
+      `/src/resources/api/index.php?action=comments&resource_id=${currentResourceId}`,
+      {
+        credentials: "include"
+      }
+    );
+
+    const commentsJson = await commentsResponse.json();
+    currentComments = commentsJson.data || [];
+    renderComments();
+
+    textArea.value = "";
+
+  } catch (error) {
+    console.error(error);
+    alert("Error posting comment");
   }
-  const newObject = { author: 'Student', text: commentValue };
-  currentComments.push(newObject);
-
-  renderComments();
-
-  textArea.value = "";
 }
+
 
 /**
  * TODO: Implement an `initializePage` function.
@@ -201,10 +185,11 @@ async function initializePage() {
   }
 
   try {
-    // 🔹 Get resource
     const resourceResponse = await fetch(
-      `/src/resources/api/index.php?id=${currentResourceId}`
+      `/src/resources/api/index.php?id=${currentResourceId}`,
+      { credentials: "include" }
     );
+
     const resourceJson = await resourceResponse.json();
 
     if (!resourceJson.success) {
@@ -215,10 +200,11 @@ async function initializePage() {
     const resource = resourceJson.data;
     renderResourceDetails(resource);
 
-    // 🔹 Get comments
     const commentsResponse = await fetch(
-      `/src/resources/api/index.php?action=comments&resource_id=${currentResourceId}`
+      `/src/resources/api/index.php?action=comments&resource_id=${currentResourceId}`,
+      { credentials: "include" }
     );
+
     const commentsJson = await commentsResponse.json();
 
     if (commentsJson.success && Array.isArray(commentsJson.data)) {

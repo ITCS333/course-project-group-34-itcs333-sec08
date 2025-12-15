@@ -49,7 +49,6 @@
 // ============================================================================
 // HEADERS AND INITIALIZATION
 // ============================================================================
-
 session_start();
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
@@ -371,7 +370,7 @@ function getCommentsByResourceId($db, $resourceId)
 
 function createComment($db, $data)
 {
-    $check = validateRequiredFields($data, ['resource_id', 'author', 'text']);
+    $check = validateRequiredFields($data, ['resource_id', 'text']);
 
     if (!$check['valid']) {
         sendResponse([
@@ -402,8 +401,10 @@ function createComment($db, $data)
     }
 
 
+    $data['author'] = $_SESSION['user_name'] ?? 'Student';
     $data['author'] = sanitizeInput($data['author']);
     $data['text'] = sanitizeInput($data['text']);
+
 
     $query = "INSERT INTO comments_resource (resource_id, author, text) VALUES (?, ?, ?)";
 
