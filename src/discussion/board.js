@@ -90,24 +90,38 @@ function renderTopics() {
  * 5. Call `renderTopics()` to refresh the list.
  * 6. Reset the form.
  */
-function handleCreateTopic(event) {
-  // ... your implementation here ...
+async function handleCreateTopic(event) {
   event.preventDefault();
 
   const subjectInput = document.querySelector("#topic-subject");
   const messageInput = document.querySelector("#topic-message");
 
+  const topicId = `topic_${Date.now()}`;
   const newTopic = {
-    id: `topic_${Date.now()}`,
+    id: topicId,
     subject: subjectInput.value,
     message: messageInput.value,
     author: "Student",
     date: new Date().toISOString().split("T")[0],
   };
 
-  topics.push(newTopic);
-  renderTopics();
-  newTopicForm.reset();
+  try {
+    const res = await fetch("api/index.php?resource=topics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic_id: topicId, subject: newTopic.subject, message: newTopic.message, author: newTopic.author }),
+    });
+    const jr = await res.json();
+    if (jr && jr.success) {
+      topics.push(newTopic);
+      renderTopics();
+      newTopicForm.reset();
+    } else {
+      console.error('Failed to create topic', jr);
+    }
+  } catch (err) {
+    console.error('Create topic error:', err);
+  }
 }
 
 /**
@@ -120,23 +134,32 @@ function handleCreateTopic(event) {
  * with the matching ID (in-memory only).
  * 4. Call `renderTopics()` to refresh the list.
  */
-function handleTopicListClick(event) {
-  // ... your implementation here ...
-  // Handle delete button
+async function handleTopicListClick(event) {
+  // Handle delete button (calls API)
   if (event.target.classList.contains("delete-btn")) {
     const topicId = event.target.getAttribute("data-id");
-    if (confirm("Are you sure you want to delete this topic?")) {
-      topics = topics.filter((topic) => topic.id !== topicId);
-      renderTopics();
+    if (!confirm("Are you sure you want to delete this topic?")) return;
+    try {
+      const res = await fetch(`api/index.php?resource=topics&id=${encodeURIComponent(topicId)}`, { method: 'DELETE' });
+      const jr = await res.json();
+      if (jr && jr.success) {
+        topics = topics.filter((topic) => topic.id !== topicId);
+        renderTopics();
+      } else {
+        console.error('Failed to delete topic', jr);
+      }
+    } catch (err) {
+      console.error('Delete topic error:', err);
     }
+    return;
   }
-  
+
   // Handle edit button - navigate to topic page with edit mode
   if (event.target.classList.contains("edit-btn")) {
     const article = event.target.closest("article");
     const topicLink = article.querySelector("a");
     const href = topicLink.getAttribute("href");
-    
+
     // Navigate to topic page with edit parameter
     window.location.href = href + "&edit=true";
   }
@@ -153,11 +176,11 @@ function handleTopicListClick(event) {
  * 5. Add the 'click' event listener to `topicListContainer` (calls `handleTopicListClick`).
  */
 async function loadAndInitialize() {
-  // ... your implementation here ...
   try {
-    const response = await fetch("api/topics.json");
-    const data = await response.json();
-    topics = data;
+    const response = await fetch("api/index.php?resource=topics");
+    const json = await response.json();
+    const data = (json && json.success) ? json.data : json;
+    topics = (data || []).map(t => ({ id: t.topic_id || t.id, subject: t.subject, author: t.author, date: t.date }));
     renderTopics();
 
     newTopicForm.addEventListener("submit", handleCreateTopic);
@@ -165,7 +188,7 @@ async function loadAndInitialize() {
   } catch (error) {
     console.error("Error loading topics:", error);
     topicListContainer.innerHTML =
-      "<p>Error loading topics. Please make sure topics.json exists.</p>";
+      "<p>Error loading topics. Please make sure the API is available.</p>";
   }
 }
 

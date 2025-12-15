@@ -182,21 +182,30 @@ function handleAddReply(event) {
   }
   
   // Create new reply object
+  const replyId = `reply_${Date.now()}`;
   const newReply = {
-    id: `reply_${Date.now()}`,
+    id: replyId,
     author: 'Student',
     date: new Date().toISOString().split('T')[0],
     text: text
   };
-  
-  // Add to currentReplies array
-  currentReplies.push(newReply);
-  
-  // Refresh the replies list
-  renderReplies();
-  
-  // Clear the textarea
-  newReplyText.value = '';
+
+  // POST to API
+  fetch('api/index.php?resource=replies', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reply_id: replyId, topic_id: currentTopicId, text: newReply.text, author: newReply.author })
+  }).then(r => r.json()).then(jr => {
+    if (jr && jr.success) {
+      currentReplies.push(newReply);
+      renderReplies();
+      newReplyText.value = '';
+    } else {
+      console.error('Failed to post reply', jr);
+    }
+  }).catch(err => {
+    console.error('Reply POST error', err);
+  });
 }
 
 /**
@@ -234,12 +243,19 @@ function handleDeletePost() {
 function handleReplyListClick(event) {
   if (event.target.classList.contains('delete-reply-btn')) {
     const replyId = event.target.getAttribute('data-id');
-    
-    // Filter out the reply with matching ID
-    currentReplies = currentReplies.filter(reply => reply.id !== replyId);
-    
-    // Refresh the list
-    renderReplies();
+    if (!confirm('Delete this reply?')) return;
+
+    // Request delete from API
+    fetch(`api/index.php?resource=replies&id=${encodeURIComponent(replyId)}`, { method: 'DELETE' })
+      .then(r => r.json())
+      .then(jr => {
+        if (jr && jr.success) {
+          currentReplies = currentReplies.filter(reply => reply.id !== replyId);
+          renderReplies();
+        } else {
+          console.error('Failed to delete reply', jr);
+        }
+      }).catch(err => console.error('Delete reply error', err));
   }
 }
 
@@ -272,26 +288,28 @@ async function initializePage() {
   }
   
   try {
-    // Fetch both topics.json and comments.json in parallel
-    const [topicsResponse, repliesResponse] = await Promise.all([
-      fetch('api/topics.json'),
-      fetch('api/comments.json')
-    ]);
-    
-    // Parse responses
-    const topics = await topicsResponse.json();
-    const repliesData = await repliesResponse.json();
-    
-    // Find the correct topic
-    const topic = topics.find(t => t.id === currentTopicId);
-    
+    // Fetch topic and replies from PHP API
+    const topicResp = await fetch(`api/index.php?resource=topics&id=${encodeURIComponent(currentTopicId)}`);
+    const topicJson = await topicResp.json();
+    const topic = (topicJson && topicJson.success) ? topicJson.data : topicJson;
+
     if (!topic) {
       topicSubject.textContent = 'Topic not found.';
       return;
     }
-    
-    // Get replies for this topic (if none exist, use empty array)
-    currentReplies = repliesData[currentTopicId] || [];
+
+    const repliesResp = await fetch(`api/index.php?resource=replies&topic_id=${encodeURIComponent(currentTopicId)}`);
+    const repliesJson = await repliesResp.json();
+    const repliesData = (repliesJson && repliesJson.success) ? repliesJson.data : repliesJson;
+
+    // Normalize replies array (API may return array or object keyed by topic id)
+    let rawReplies = [];
+    if (Array.isArray(repliesData)) {
+      rawReplies = repliesData;
+    } else if (repliesData && repliesData[currentTopicId]) {
+      rawReplies = repliesData[currentTopicId];
+    }
+    currentReplies = (rawReplies || []).map(r => ({ id: r.reply_id || r.id, author: r.author, date: r.date, text: r.text }));
     
     // Render the original post
     renderOriginalPost(topic);
