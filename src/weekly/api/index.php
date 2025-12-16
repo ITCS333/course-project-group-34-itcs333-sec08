@@ -44,6 +44,7 @@
 // Allow cross-origin requests (CORS) if needed
 // Allow specific HTTP methods (GET, POST, PUT, DELETE, OPTIONS)
 // Allow specific headers (Content-Type, Authorization)
+session_start();
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -101,6 +102,11 @@ function getAllWeeks($db) {
     $search = isset($_GET['search']) ? $_GET['search'] : null;
     $sort = isset($_GET['sort']) ? $_GET['sort'] : 'start_date';
     $order = isset($_GET['order']) ? $_GET['order'] : 'asc';
+    if ($search) {
+        $_SESSION['last_search'] = $search;
+    }
+    $_SESSION['user_preferences']['sort'] = $sort;
+    $_SESSION['user_preferences']['order'] = $order;
     
     // TODO: Start building the SQL query
     // Base query: SELECT week_id, title, start_date, description, links, created_at FROM weeks
@@ -158,10 +164,13 @@ function getAllWeeks($db) {
     foreach ($weeks as &$week) {
         $week['links'] = json_decode($week['links'], true);
     }
+    $_SESSION['last_activity'] = time();
     
     // TODO: Return JSON response with success status and data
     // Use sendResponse() helper function
-    sendResponse(['success' => true, 'data' => $weeks]);
+    sendResponse(['success' => true,
+     'data' => $weeks,
+     'user_id' => $_SESSION['user_id']]);
 }
 
 
@@ -179,6 +188,12 @@ function getWeekById($db, $weekId) {
     if (empty($weekId)) {
         sendError('Week ID is required', 400);
         return;
+    }
+    if (!isset($_SESSION['viewed_weeks'])) {
+        $_SESSION['viewed_weeks'] = [];
+    }
+    if (!in_array($weekId, $_SESSION['viewed_weeks'])) {
+        $_SESSION['viewed_weeks'][] = $weekId;
     }
     
     // TODO: Prepare SQL query to select week by week_id
@@ -200,6 +215,7 @@ function getWeekById($db, $weekId) {
     // If no, return error response with 404 status
     if ($week) {
         $week['links'] = json_decode($week['links'], true);
+        $_SESSION['last_activity'] = time();
         sendResponse(['success' => true, 'data' => $week]);
     } else {
         sendError('Week not found', 404);
@@ -280,6 +296,12 @@ function createWeek($db, $data) {
     // If yes, return success response with 201 status (Created) and the new week data
     // If no, return error response with 500 status
     if ($result) {
+        if (!isset($_SESSION['created_weeks'])) {
+            $_SESSION['created_weeks'] = [];
+        }
+        $_SESSION['created_weeks'][] = $weekId;
+        $_SESSION['last_activity'] = time();
+
         $newWeek = [
             'week_id' => $weekId,
             'title' => $title,
@@ -395,14 +417,19 @@ function updateWeek($db, $data) {
     // If yes, return success response with updated week data
     // If no, return error response with 500 status
     if ($result) {
-        // Fetch updated week
+        if (!isset($_SESSION['updated_weeks'])) {
+            $_SESSION['updated_weeks'] = [];
+        }
+        $_SESSION['updated_weeks'][] = $weekId;
+        $_SESSION['last_activity'] = time();
+
         $fetchSql = "SELECT week_id, title, start_date, description, links, created_at FROM weeks WHERE week_id = ?";
         $fetchStmt = $db->prepare($fetchSql);
         $fetchStmt->bindValue(1, $weekId);
         $fetchStmt->execute();
         $updatedWeek = $fetchStmt->fetch(PDO::FETCH_ASSOC);
         $updatedWeek['links'] = json_decode($updatedWeek['links'], true);
-        
+
         sendResponse(['success' => true, 'data' => $updatedWeek, 'message' => 'Week updated successfully']);
     } else {
         sendError('Failed to update week', 500);
@@ -464,6 +491,11 @@ function deleteWeek($db, $weekId) {
     // If yes, return success response with message indicating week and comments deleted
     // If no, return error response with 500 status
     if ($result) {
+        if (!isset($_SESSION['deleted_weeks'])) {
+            $_SESSION['deleted_weeks'] = [];
+        }
+        $_SESSION['deleted_weeks'][] = $weekId;
+        $_SESSION['last_activity'] = time();
         sendResponse(['success' => true, 'message' => 'Week and associated comments deleted successfully']);
     } else {
         sendError('Failed to delete week', 500);
@@ -504,6 +536,8 @@ function getCommentsByWeek($db, $weekId) {
     
     // TODO: Fetch all results as an associative array
     $comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $_SESSION['last_activity'] = time();
     
     // TODO: Return JSON response with success status and data
     // Even if no comments exist, return an empty array
@@ -535,6 +569,8 @@ function createComment($db, $data) {
     $weekId = sanitizeInput($data['week_id']);
     $author = sanitizeInput($data['author']);
     $text = sanitizeInput($data['text']);
+
+    $_SESSION['comment_authors'] = $author;
     
     // TODO: Validate that text is not empty after trimming
     // If empty, return error response with 400 status
@@ -574,6 +610,12 @@ function createComment($db, $data) {
     // Include the new comment data in the response
     // If no, return error response with 500 status
     if ($result) {
+        if (!isset($_SESSION['created_comments'])) {
+            $_SESSION['created_comments'] = [];
+        }
+        $_SESSION['created_comments'][] = $commentId;
+        $_SESSION['last_activity'] = time();
+        
         $commentId = $db->lastInsertId();
         $newComment = [
             'id' => $commentId,
@@ -632,6 +674,12 @@ function deleteComment($db, $commentId) {
     // If yes, return success response
     // If no, return error response with 500 status
     if ($result) {
+        if (!isset($_SESSION['deleted_comments'])) {
+            $_SESSION['deleted_comments'] = [];
+        }
+        $_SESSION['deleted_comments'][] = $commentId;
+        $_SESSION['last_activity'] = time();
+        
         sendResponse(['success' => true, 'message' => 'Comment deleted successfully']);
     } else {
         sendError('Failed to delete comment', 500);
