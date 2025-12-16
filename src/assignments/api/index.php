@@ -35,6 +35,13 @@ session_start();
  * 
  * Response Format: JSON
  */
+if (!isset($_SESSION['api_user'])) {
+    $_SESSION['api_user'] = [
+        'id' => 'api_user_' . uniqid(),
+        'last_activity' => time(),
+        'requests_count' => 0
+    ];
+}
 
 // ============================================================================
 // HEADERS AND CORS CONFIGURATION
