@@ -17,9 +17,10 @@ let assignments = [];
 
 // --- Element Selections ---
 // TODO: Select the assignment form ('#assignment-form').
+let assignmentForm = document.getElementById("assignment-form");
 
 // TODO: Select the assignments table body ('#assignments-tbody').
-
+let assignmentsTableBody = document.getElementById("assignments-tbody");
 // --- Functions ---
 
 /**
@@ -34,6 +35,38 @@ let assignments = [];
  */
 function createAssignmentRow(assignment) {
   // ... your implementation here ...
+  const tr = document.createElement("tr");
+
+  
+  const titleTd = document.createElement("td");
+  titleTd.textContent = assignment.title;
+
+  
+  const dueDateTd = document.createElement("td");
+  dueDateTd.textContent = assignment.dueDate;
+
+  
+  const actionsTd = document.createElement("td");
+  
+  const editBtn = document.createElement("button");
+  editBtn.textContent = "Edit";
+  editBtn.className = "edit-btn";
+  editBtn.setAttribute("data-id", assignment.id);
+
+  
+  const deleteBtn = document.createElement("button");
+  deleteBtn.textContent = "Delete";
+  deleteBtn.className = "delete-btn";
+
+  
+  deleteBtn.setAttribute("data-id", assignment.id);
+  actionsTd.appendChild(editBtn);
+  actionsTd.appendChild(deleteBtn);
+
+  tr.appendChild(actionsTd);
+  tr.appendChild(titleTd);
+  tr.appendChild(dueDateTd);
+  
 }
 
 /**
@@ -46,6 +79,11 @@ function createAssignmentRow(assignment) {
  */
 function renderTable() {
   // ... your implementation here ...
+  document.getElementById("assignments-tbody").innerHTML = "";
+  assignments.forEach((assignment) =>{
+    const row = createAssignmentRow(assignment);
+    assignmentsTableBody.appendChild(row);
+  })
 }
 
 /**
@@ -61,6 +99,20 @@ function renderTable() {
  */
 function handleAddAssignment(event) {
   // ... your implementation here ...
+  event.preventDefault();
+  const title = document.getElementById("assignment-title").value;
+  const description = document.getElementById("assignment-description").value;
+  const dueDate = document.getElementById("assignment-due-date").value;
+  const files = document.getElementById("assignment-files").value.split("\n");
+  const newAssignment = {
+    id: `asg_${Date.now()}`,
+    title: title,
+    description: description,
+    dueDate: dueDate,
+    files: files,
+  };
+  assignments.push(newAssignment);
+  renderTable();
 }
 
 /**
@@ -75,6 +127,11 @@ function handleAddAssignment(event) {
  */
 function handleTableClick(event) {
   // ... your implementation here ...
+  if (event.target.classList.contains("delete-btn")){
+    const assignmentId = event.target.getAttribute("data-id");
+    assignments = assignments.filter((assignment) => assignment.id !== assignmentId);
+    renderTable();
+  }
 }
 
 /**
@@ -89,6 +146,18 @@ function handleTableClick(event) {
  */
 async function loadAndInitialize() {
   // ... your implementation here ...
+  try{
+    const response = await fetch("assignments.json");
+    const data = await response.json();
+    assignments = data;
+    renderTable();
+    assignmentForm.addEventListener("submit", handleAddAssignment);
+    assignmentsTableBody.addEventListener("click", handleTableClick);
+  }
+  catch (error){
+    console.error("Error loading assignments data:", error);
+  }
+  
 }
 
 // --- Initial Page Load ---
