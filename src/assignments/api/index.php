@@ -1,4 +1,5 @@
 <?php
+session_start();
 /**
  * Assignment Management API
  * 
